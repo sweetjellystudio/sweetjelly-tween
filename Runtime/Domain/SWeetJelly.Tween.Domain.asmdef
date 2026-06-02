@@ -1,0 +1,16 @@
+{
+    "name": "SWeetJelly.Tween.Domain",
+    "rootNamespace": "SWeetJelly.Tween.Domain",
+    "references": [
+        "SWeetJelly.Tween.Contract"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

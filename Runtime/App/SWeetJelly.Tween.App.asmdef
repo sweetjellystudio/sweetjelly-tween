@@ -1,0 +1,17 @@
+{
+    "name": "SWeetJelly.Tween.App",
+    "rootNamespace": "SWeetJelly.Tween.App",
+    "references": [
+        "SWeetJelly.Tween.Contract",
+        "SWeetJelly.Tween.Domain"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
