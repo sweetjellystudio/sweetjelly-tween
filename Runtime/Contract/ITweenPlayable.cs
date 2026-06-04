@@ -6,6 +6,7 @@ namespace SWeetJelly.Tween.Contract
         bool IsActive { get; }
         bool IsCompleted { get; }
         bool IsKilling { get; }
+        bool IsKilled { get; }
         bool IsPaused { get; }
         bool IsUnscaled { get; }
 
