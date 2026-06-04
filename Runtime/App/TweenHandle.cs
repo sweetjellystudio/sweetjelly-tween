@@ -9,7 +9,7 @@ namespace SWeetJelly.Tween.App
 
         public bool IsActive => playable.IsActive;
         public bool IsCompleted => playable.IsCompleted;
-        public bool IsKilled => playable.IsKilling;
+        public bool IsKilled => playable.IsKilled;
 
         public event Action Completed;
         public event Action Killed;
