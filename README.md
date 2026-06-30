@@ -32,8 +32,8 @@ package "Framework" {
   class EasingFunctionCatalog
 }
 
-package "InitialiserIntegration" {
-  class TweenInitModule
+package "Framework.Bootstrapper" {
+  class TweenPackageBootstrapperSo
 }
 
 TweenBehaviour --> TweenBucket
@@ -46,7 +46,7 @@ TweenCasePlayExtensions --> TweenBehaviour
 TweenCasePlayExtensions --> TweenCase
 AnimationCurveEasingFunction ..|> IEasingFunction
 EasingFunctions --> IEasingFunction
-TweenInitModule --> TweenBehaviour
+TweenPackageBootstrapperSo --> TweenBehaviour
 
 @enduml
 ```

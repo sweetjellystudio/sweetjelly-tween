@@ -1,0 +1,19 @@
+{
+    "name": "SWeetJelly.Tween.Framework.Unity",
+    "rootNamespace": "SWeetJelly.Tween.Framework.Unity",
+    "references": [
+        "SWeetJelly.Tween.Contract",
+        "SWeetJelly.Tween.Domain",
+        "SWeetJelly.Tween.App",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
