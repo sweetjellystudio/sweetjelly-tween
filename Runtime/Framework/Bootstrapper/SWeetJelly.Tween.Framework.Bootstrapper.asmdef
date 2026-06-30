@@ -1,0 +1,30 @@
+﻿{
+    "name":  "SWeetJelly.Tween.Framework.Bootstrapper",
+    "rootNamespace":  "SWeetJelly.Tween.Framework.Bootstrapper",
+    "references":  [
+                       "SWeetJelly.Bootstrapper.Contract",
+                       "SWeetJelly.Bootstrapper.Framework.Unity",
+                       "SWeetJelly.Tween.Contract",
+                       "SWeetJelly.Tween.App",
+                       "SWeetJelly.Tween.Framework.Unity"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "versionDefines":  [
+
+                       ],
+    "noEngineReferences":  false
+}

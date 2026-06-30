@@ -1,0 +1,28 @@
+{
+    "name": "SWeetJelly.Tween.Tests.EditMode",
+    "rootNamespace": "SWeetJelly.Tween.Tests.EditMode",
+    "references": [
+        "SWeetJelly.Tween.Contract",
+        "SWeetJelly.Tween.Domain",
+        "SWeetJelly.Tween.App",
+        "SWeetJelly.Tween.Framework.Unity",
+        "SWeetJelly.Tween.Framework.Bootstrapper",
+        "SWeetJelly.Bootstrapper.Contract",
+        "SWeetJelly.Bootstrapper.App",
+        "SWeetJelly.Bootstrapper.Framework.Unity"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}

@@ -8,6 +8,6 @@
 * [Added] Added Unity tween driver support through `TweenBehaviour`.
 * [Added] Added tween case and handle workflow for running and controlling tween operations.
 * [Added] Added easing support through `EaseType` and easing function abstractions.
-* [Added] Added Initialiser integration for registering tween services during project bootstrap.
+* [Added] Added Bootstrapper integration for registering tween services during project bootstrap.
 * [Changed] Moved tween logic from the unclassified Core module into dedicated Tween assemblies.
-* [Changed] Separated Tween into `Contract`, `App`, `Framework`, and `InitialiserIntegration` layers.
+* [Changed] Separated Tween into `Contract`, `App`, `Framework/Unity`, and `Framework/Bootstrapper` layers.

@@ -1,0 +1,22 @@
+{
+    "name": "SWeetJelly.Tween.Tests.PlayMode",
+    "rootNamespace": "SWeetJelly.Tween.Tests.PlayMode",
+    "references": [
+        "SWeetJelly.Tween.Contract",
+        "SWeetJelly.Tween.Domain",
+        "SWeetJelly.Tween.App",
+        "SWeetJelly.Tween.Framework.Unity"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
