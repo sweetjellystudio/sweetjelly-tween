@@ -2,24 +2,20 @@ using UnityEngine;
 
 namespace SWeetJelly.Tween.Framework.Unity
 {
-    public sealed class TransformScaleTweenPlayer
+    public sealed class TransformPositionTweenPlayer
         : TweenPlayerBehaviour<Transform, Vector3>
     {
         protected override Vector3 CurrentValue
         {
-            get => TargetComponent.localScale;
-            set => TargetComponent.localScale = value;
+            get => TargetComponent.position;
+            set => TargetComponent.position = value;
         }
 
-        protected override TweenCase CreateTweenCase(Vector3 endValue)
-        {
-            return TargetComponent.DOScale(endValue, duration);
-        }
+        protected override TweenCase CreateTweenCase(Vector3 endValue) => TargetComponent.DOMove(endValue, duration);
 
         protected override void IncrementLoopChangeValues()
         {
             Vector3 delta = endValue - startValue;
-
             startValue = endValue;
             endValue += delta;
         }

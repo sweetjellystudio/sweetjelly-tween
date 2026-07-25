@@ -5,6 +5,7 @@
     using SWeetJelly.Tween.Contract;
     using SWeetJelly.Tween.App;
     using SWeetJelly.Tween.Framework.Unity;
+
     [CreateAssetMenu(
         fileName = "Tween Package Bootstrapper", 
         menuName = "SWeetJelly/Bootstrapper/Packages/Tween")]
@@ -39,6 +40,5 @@
 
             service = null;
         }
-
     }
 }
