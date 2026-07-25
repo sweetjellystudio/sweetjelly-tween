@@ -6,6 +6,7 @@ This sample shows the `TweenPlayerBehaviour` flow for `com.sweetjelly.tween`.
 - The scene contains GameObjects with TweenPlayer components already attached.
 - The injector sends `ITweenService` to every `TweenPlayerBehaviour` instance, then the players run from their `OnEnable` lifecycle.
 - The sample includes Transform scale, CanvasGroup fade, Graphic color, and RectTransform anchored position players.
+- For designer-facing setup rules and troubleshooting, see `Documentation~/TweenPlayerDesignerGuide.ko.md`.
 
 ## Setup
 

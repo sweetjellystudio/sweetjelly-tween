@@ -3,10 +3,55 @@ using UnityEngine;
 using SWeetJelly.Tween.Contract;
 using SWeetJelly.Tween.Domain;
 using SWeetJelly.Tween.App;
+using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace SWeetJelly.Tween.Framework.Unity
 {
-    public abstract class TweenPlayerBehaviour<C, T> : MonoBehaviour
+    public abstract class TweenPlayerBehaviour : MonoBehaviour
+    {
+        public event Action Played;
+        public event Action Completed;
+        public event Action Killed;
+
+        public abstract bool IsPlaying { get; }
+
+        public abstract void Play();
+        public abstract void Play(bool forward);
+        public abstract void PlayForward();
+        public abstract void PlayBackward();
+        public abstract void Snap(bool forward);
+        public abstract void SnapForward();
+        public abstract void SnapBackward();
+        public abstract void Kill();
+        public abstract void SetPlayOnEnable(bool playOnEnable);
+
+        public virtual void Inject(ITweenService tweenService)
+        {
+            Initialise(tweenService);
+        }
+
+        public virtual void Initialise(ITweenService tweenService)
+        {
+        }
+
+        protected void NotifyPlayed()
+        {
+            Played?.Invoke();
+        }
+
+        protected void NotifyCompleted()
+        {
+            Completed?.Invoke();
+        }
+
+        protected void NotifyKilled()
+        {
+            Killed?.Invoke();
+        }
+    }
+
+    public abstract class TweenPlayerBehaviour<C, T> : TweenPlayerBehaviour
         where C : Component
     {
         [Header("Timing")]
@@ -14,6 +59,9 @@ namespace SWeetJelly.Tween.Framework.Unity
         [SerializeField] protected float delay = 0f;
         [SerializeField] protected bool unscaledTime = false;
         [SerializeField] protected UpdateMethod updateMethod = UpdateMethod.Update;
+
+        [Header("Playback")]
+        [SerializeField] private bool playOnEnable = false;
 
         [Header("Easing")]
         [SerializeField] protected EaseType easing = EaseType.Linear;
@@ -25,21 +73,32 @@ namespace SWeetJelly.Tween.Framework.Unity
         [SerializeField] protected LoopType loopType = LoopType.Repeat;
 
         [Header("Target")]
-        [SerializeField] protected TweenTargetType targetType = TweenTargetType.To;
-        [SerializeField] protected T targetValue;
+        [SerializeField] private C targetComponent;
+        [FormerlySerializedAs("targetType")]
+        [SerializeField] protected PlaybackDirection playOnEnableDirection = PlaybackDirection.Forward;
+        [FormerlySerializedAs("targetValue")]
+        [SerializeField] protected T forwardValue;
 
-        private C targetComponent;
+        [Header("Events")]
+        [SerializeField] private UnityEvent played;
+        [SerializeField] private UnityEvent completed;
+        [SerializeField] private UnityEvent killed;
+
         private ITweenService tweenService;
 
         private bool isInjected;
         private bool pendingPlay;
+        private bool missingServiceWarningLogged;
+        private bool suppressKilledEvent;
 
         protected ITweenHandle activeHandle;
         protected int loopIndex;
 
-        protected T initialValue;
+        protected T backwardValue;
         protected T startValue;
         protected T endValue;
+
+        public override bool IsPlaying => activeHandle != null && activeHandle.IsActive;
 
         protected C TargetComponent
         {
@@ -55,7 +114,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         protected abstract T CurrentValue { get; set; }
 
-        public void Inject(ITweenService tweenService)
+        public override void Initialise(ITweenService tweenService)
         {
             if (tweenService == null)
                 throw new ArgumentNullException(nameof(tweenService));
@@ -81,7 +140,7 @@ namespace SWeetJelly.Tween.Framework.Unity
                 return;
             }
 
-            initialValue = CurrentValue;
+            backwardValue = CurrentValue;
         }
 
         protected virtual void OnEnable()
@@ -89,9 +148,13 @@ namespace SWeetJelly.Tween.Framework.Unity
             if (TargetComponent == null)
                 return;
 
+            if (!playOnEnable)
+                return;
+
             if (!isInjected)
             {
                 pendingPlay = true;
+                LogMissingServiceWarning();
                 return;
             }
 
@@ -101,12 +164,74 @@ namespace SWeetJelly.Tween.Framework.Unity
         protected virtual void OnDisable()
         {
             pendingPlay = false;
+            Kill();
+        }
 
-            if (activeHandle != null)
+        public override void Play()
+        {
+            if (!isActiveAndEnabled)
+                return;
+
+            if (!isInjected)
             {
-                activeHandle.Kill();
-                activeHandle = null;
+                pendingPlay = true;
+                LogMissingServiceWarning();
+                return;
             }
+
+            PlayFromEnableState();
+        }
+
+        public override void Play(bool forward)
+        {
+            if (forward)
+                PlayForward();
+            else
+                PlayBackward();
+        }
+
+        public override void PlayForward()
+        {
+            PlayFromCurrent(forwardValue);
+        }
+
+        public override void PlayBackward()
+        {
+            PlayFromCurrent(backwardValue);
+        }
+
+        public override void Snap(bool forward)
+        {
+            if (forward)
+                SnapForward();
+            else
+                SnapBackward();
+        }
+
+        public override void SnapForward()
+        {
+            KillSilently();
+            CurrentValue = forwardValue;
+        }
+
+        public override void SnapBackward()
+        {
+            KillSilently();
+            CurrentValue = backwardValue;
+        }
+
+        public override void Kill()
+        {
+            if (activeHandle == null)
+                return;
+
+            activeHandle.Kill();
+            activeHandle = null;
+        }
+
+        public override void SetPlayOnEnable(bool playOnEnable)
+        {
+            this.playOnEnable = playOnEnable;
         }
 
         private void PlayFromEnableState()
@@ -118,17 +243,37 @@ namespace SWeetJelly.Tween.Framework.Unity
             PlayLoop(delay);
         }
 
+        private void PlayFromCurrent(T destination)
+        {
+            if (!isActiveAndEnabled)
+                return;
+
+            if (!isInjected)
+            {
+                pendingPlay = true;
+                return;
+            }
+
+            KillSilently();
+
+            startValue = CurrentValue;
+            endValue = destination;
+            loopIndex = 0;
+
+            PlayLoop(delay);
+        }
+
         protected virtual void PrepareValues()
         {
-            if (targetType == TweenTargetType.From)
+            if (playOnEnableDirection == PlaybackDirection.Backward)
             {
-                startValue = targetValue;
-                endValue = initialValue;
+                startValue = forwardValue;
+                endValue = backwardValue;
             }
             else
             {
-                startValue = initialValue;
-                endValue = targetValue;
+                startValue = backwardValue;
+                endValue = forwardValue;
             }
 
             CurrentValue = startValue;
@@ -138,11 +283,11 @@ namespace SWeetJelly.Tween.Framework.Unity
         {
             if (tweenService == null)
             {
-                Debug.LogError(
-                    $"[{nameof(TweenPlayerBehaviour<C, T>)}]: Tween service is not injected.",
-                    this);
+                LogMissingServiceWarning();
                 return;
             }
+
+            KillSilently();
 
             loopIndex++;
 
@@ -156,9 +301,19 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             ITweenHandle handle = tweenService.Play(tweenCase);
             activeHandle = handle;
+            NotifyPlayed();
+            played?.Invoke();
 
             if (ShouldContinueLoop())
+            {
                 handle.Completed += OnLoopCompleted;
+            }
+            else
+            {
+                handle.Completed += OnCompleted;
+            }
+
+            handle.Killed += OnKilled;
         }
 
         protected virtual bool ShouldContinueLoop()
@@ -171,6 +326,8 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         protected virtual void OnLoopCompleted()
         {
+            activeHandle = null;
+
             switch (loopType)
             {
                 case LoopType.Repeat:
@@ -189,6 +346,47 @@ namespace SWeetJelly.Tween.Framework.Unity
             }
 
             PlayLoop(0f);
+        }
+
+        protected virtual void OnCompleted()
+        {
+            activeHandle = null;
+            NotifyCompleted();
+            completed?.Invoke();
+        }
+
+        protected virtual void OnKilled()
+        {
+            activeHandle = null;
+
+            if (suppressKilledEvent)
+                return;
+
+            NotifyKilled();
+            killed?.Invoke();
+        }
+
+        private void KillSilently()
+        {
+            if (activeHandle == null)
+                return;
+
+            suppressKilledEvent = true;
+            activeHandle.Kill();
+            suppressKilledEvent = false;
+            activeHandle = null;
+        }
+
+        private void LogMissingServiceWarning()
+        {
+            if (missingServiceWarningLogged)
+                return;
+
+            missingServiceWarningLogged = true;
+
+            Debug.LogWarning(
+                $"[{GetType().Name}]: Tween service is not injected. Call {nameof(Initialise)} before playing this tween.",
+                this);
         }
 
         protected virtual void ApplyEasing(TweenCase tweenCase)
@@ -210,10 +408,10 @@ namespace SWeetJelly.Tween.Framework.Unity
             Increment = 2,
         }
 
-        public enum TweenTargetType
+        public enum PlaybackDirection
         {
-            From = 0,
-            To = 1
+            Backward = 0,
+            Forward = 1
         }
     }
 }
