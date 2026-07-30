@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v1.1.2
+
+* [Fixed] Changed tween player origin capture from `Awake` time to the start of forward playback so backward playback restores the actual pre-tween value.
+* [Fixed] Preserved the captured origin across repeated forward playback and direction changes until backward playback completes.
+* [Fixed] Preserved the requested playback direction when playback is queued before tween service injection.
+* [Added] Added configurable endpoint playback for explicitly playing between serialized backward and forward values.
+
+## v1.1.1
+
+* [Added] Added `AnimatorTweenPlayerBehaviour` for trigger-driven Animator playback with state completion tracking, snapping, and TweenPlayer lifecycle events.
+
 ## v1.1.0
 
 * [Added] Added `TweenPlayerBehaviour` components for designer-driven tween playback through Unity Events.
