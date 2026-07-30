@@ -62,6 +62,9 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         [Header("Playback")]
         [SerializeField] private bool playOnEnable = false;
+        [Tooltip("Capture On Forward stores the value when a forward cycle begins and returns to it on backward. " +
+                 "Configured Endpoints always plays between the serialized Backward and Forward values.")]
+        [SerializeField] private EndpointMode endpointMode = EndpointMode.CaptureOnForward;
 
         [Header("Easing")]
         [SerializeField] protected EaseType easing = EaseType.Linear;
@@ -76,6 +79,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         [SerializeField] private C targetComponent;
         [FormerlySerializedAs("targetType")]
         [SerializeField] protected PlaybackDirection playOnEnableDirection = PlaybackDirection.Forward;
+        [SerializeField] protected T backwardValue;
         [FormerlySerializedAs("targetValue")]
         [SerializeField] protected T forwardValue;
 
@@ -88,13 +92,16 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         private bool isInjected;
         private bool pendingPlay;
+        private PlaybackDirection pendingPlayDirection;
         private bool missingServiceWarningLogged;
         private bool suppressKilledEvent;
+        private bool hasCapturedOrigin;
+        private bool releaseCapturedOriginOnComplete;
 
         protected ITweenHandle activeHandle;
         protected int loopIndex;
 
-        protected T backwardValue;
+        protected T capturedOrigin;
         protected T startValue;
         protected T endValue;
 
@@ -124,8 +131,9 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             if (pendingPlay && isActiveAndEnabled)
             {
+                PlaybackDirection direction = pendingPlayDirection;
                 pendingPlay = false;
-                PlayFromEnableState();
+                Play(direction == PlaybackDirection.Forward);
             }
         }
 
@@ -139,8 +147,6 @@ namespace SWeetJelly.Tween.Framework.Unity
                 enabled = false;
                 return;
             }
-
-            backwardValue = CurrentValue;
         }
 
         protected virtual void OnEnable()
@@ -153,18 +159,19 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             if (!isInjected)
             {
-                pendingPlay = true;
+                QueuePendingPlay(playOnEnableDirection);
                 LogMissingServiceWarning();
                 return;
             }
 
-            PlayFromEnableState();
+            Play(playOnEnableDirection == PlaybackDirection.Forward);
         }
 
         protected virtual void OnDisable()
         {
             pendingPlay = false;
             Kill();
+            ClearCapturedOrigin();
         }
 
         public override void Play()
@@ -174,12 +181,12 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             if (!isInjected)
             {
-                pendingPlay = true;
+                QueuePendingPlay(playOnEnableDirection);
                 LogMissingServiceWarning();
                 return;
             }
 
-            PlayFromEnableState();
+            Play(playOnEnableDirection == PlaybackDirection.Forward);
         }
 
         public override void Play(bool forward)
@@ -192,12 +199,42 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public override void PlayForward()
         {
-            PlayFromCurrent(forwardValue);
+            if (!CanStartPlayback(PlaybackDirection.Forward))
+                return;
+
+            if (endpointMode == EndpointMode.ConfiguredEndpoints)
+            {
+                PlayDirection(backwardValue, forwardValue, forceConfiguredStart: true, releaseOriginOnComplete: false);
+                return;
+            }
+
+            if (!hasCapturedOrigin)
+            {
+                capturedOrigin = CurrentValue;
+                hasCapturedOrigin = true;
+            }
+
+            PlayDirection(capturedOrigin, forwardValue, forceConfiguredStart: false, releaseOriginOnComplete: false);
         }
 
         public override void PlayBackward()
         {
-            PlayFromCurrent(backwardValue);
+            if (!CanStartPlayback(PlaybackDirection.Backward))
+                return;
+
+            if (endpointMode == EndpointMode.ConfiguredEndpoints)
+            {
+                PlayDirection(forwardValue, backwardValue, forceConfiguredStart: true, releaseOriginOnComplete: false);
+                return;
+            }
+
+            if (!hasCapturedOrigin)
+            {
+                CompleteWithoutPlayback();
+                return;
+            }
+
+            PlayDirection(forwardValue, capturedOrigin, forceConfiguredStart: false, releaseOriginOnComplete: true);
         }
 
         public override void Snap(bool forward)
@@ -211,13 +248,31 @@ namespace SWeetJelly.Tween.Framework.Unity
         public override void SnapForward()
         {
             KillSilently();
+
+            if (endpointMode == EndpointMode.CaptureOnForward && !hasCapturedOrigin)
+            {
+                capturedOrigin = CurrentValue;
+                hasCapturedOrigin = true;
+            }
+
             CurrentValue = forwardValue;
         }
 
         public override void SnapBackward()
         {
             KillSilently();
-            CurrentValue = backwardValue;
+
+            if (endpointMode == EndpointMode.ConfiguredEndpoints)
+            {
+                CurrentValue = backwardValue;
+                return;
+            }
+
+            if (!hasCapturedOrigin)
+                return;
+
+            CurrentValue = capturedOrigin;
+            ClearCapturedOrigin();
         }
 
         public override void Kill()
@@ -234,49 +289,38 @@ namespace SWeetJelly.Tween.Framework.Unity
             this.playOnEnable = playOnEnable;
         }
 
-        private void PlayFromEnableState()
-        {
-            PrepareValues();
-
-            loopIndex = 0;
-
-            PlayLoop(delay);
-        }
-
-        private void PlayFromCurrent(T destination)
+        private bool CanStartPlayback(PlaybackDirection direction)
         {
             if (!isActiveAndEnabled)
-                return;
+                return false;
 
-            if (!isInjected)
-            {
-                pendingPlay = true;
-                return;
-            }
+            if (isInjected)
+                return true;
 
-            KillSilently();
-
-            startValue = CurrentValue;
-            endValue = destination;
-            loopIndex = 0;
-
-            PlayLoop(delay);
+            QueuePendingPlay(direction);
+            LogMissingServiceWarning();
+            return false;
         }
 
-        protected virtual void PrepareValues()
+        private void PlayDirection(
+            T configuredStart,
+            T destination,
+            bool forceConfiguredStart,
+            bool releaseOriginOnComplete)
         {
-            if (playOnEnableDirection == PlaybackDirection.Backward)
-            {
-                startValue = forwardValue;
-                endValue = backwardValue;
-            }
-            else
-            {
-                startValue = backwardValue;
-                endValue = forwardValue;
-            }
+            KillSilently();
 
-            CurrentValue = startValue;
+            startValue = forceConfiguredStart
+                ? configuredStart
+                : CurrentValue;
+            endValue = destination;
+            loopIndex = 0;
+            releaseCapturedOriginOnComplete = releaseOriginOnComplete;
+
+            if (forceConfiguredStart)
+                CurrentValue = startValue;
+
+            PlayLoop(delay);
         }
 
         protected virtual void PlayLoop(float loopDelay)
@@ -351,6 +395,11 @@ namespace SWeetJelly.Tween.Framework.Unity
         protected virtual void OnCompleted()
         {
             activeHandle = null;
+
+            if (releaseCapturedOriginOnComplete)
+                ClearCapturedOrigin();
+
+            releaseCapturedOriginOnComplete = false;
             NotifyCompleted();
             completed?.Invoke();
         }
@@ -358,6 +407,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         protected virtual void OnKilled()
         {
             activeHandle = null;
+            releaseCapturedOriginOnComplete = false;
 
             if (suppressKilledEvent)
                 return;
@@ -375,6 +425,27 @@ namespace SWeetJelly.Tween.Framework.Unity
             activeHandle.Kill();
             suppressKilledEvent = false;
             activeHandle = null;
+        }
+
+        private void CompleteWithoutPlayback()
+        {
+            KillSilently();
+            NotifyPlayed();
+            played?.Invoke();
+            NotifyCompleted();
+            completed?.Invoke();
+        }
+
+        private void QueuePendingPlay(PlaybackDirection direction)
+        {
+            pendingPlay = true;
+            pendingPlayDirection = direction;
+        }
+
+        private void ClearCapturedOrigin()
+        {
+            hasCapturedOrigin = false;
+            capturedOrigin = default;
         }
 
         private void LogMissingServiceWarning()
@@ -412,6 +483,12 @@ namespace SWeetJelly.Tween.Framework.Unity
         {
             Backward = 0,
             Forward = 1
+        }
+
+        public enum EndpointMode
+        {
+            CaptureOnForward = 0,
+            ConfiguredEndpoints = 1,
         }
     }
 }
