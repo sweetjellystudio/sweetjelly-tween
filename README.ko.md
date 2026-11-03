@@ -1,5 +1,15 @@
 # SWeetJelly Tween
 
+## 2.0 안내
+
+Unity 6.3 LTS, Bootstrapper 2.0.0과 uGUI 2.0.0을 기준으로 한다. TMP 기능과 Unity.TextMeshPro 참조는 유지하며, 미사용 Utils와 별도 TMP 패키지 선언을 제거했다. runtime에서 사용하는 Audio/Animation 모듈은 직접 선언한다.
+
+현재 실행 진입점은 ITweenService/TweenService이며 TweenBehaviour는 Unity frame 시간을 전달하는 adapter다. 아래의 과거 runner 설명보다 [현재 사용법](README.md), [아키텍처](ARCHITECTURE.md), [이전 안내](Documentation~/migration-2.0.md)를 우선한다. 기존 public/protected API·serialized player 필드·GUID와 custom TweenPlayerBehaviour 상속을 보존한다.
+
+handle은 한 실행의 완료 또는 Kill을 관찰하며 ToTask는 정상 완료 시 성공, Kill/취소 시 canceled로 끝난다. 호출·설정·취소를 순차 수행하고 Unity 대상과 token 취소는 main thread에서 다룬다. callback 실패·종료 observer·등록 및 driver 소유권의 정확한 규칙은 아키텍처와 이전 안내에 있다.
+
+사용자가 작성한 [TweenPlayer 가이드](Documentation~/TweenPlayerDesignerGuide.ko.md)와 [Animator 가이드](Documentation~/AnimatorTweenPlayerDesignerGuide.ko.md)를 유지한다. 더 넓은 TweenPlayer 비동기 adapter 개선은 [후속 TODO](Documentation~/TODO.md)에만 기록했다.
+
 SWeetJelly Tween은 Unity object, UI, text, renderer, material, transform 등을 시간에 따라 보간하기 위한 tween module입니다.
 
 easing function은 domain layer에 두고, 실제 Unity object를 변경하는 concrete tween case는 framework layer에 둡니다. `TweenBehaviour`는 Unity update loop에서 tween을 실행하는 runner 역할을 합니다.
@@ -280,56 +290,3 @@ CanvasGroupFadeTweenCase
 - `TweenBehaviour.Play` 기반 실행
 - `EaseType` 사용
 - concrete player는 `CreateTweenCase`만 구현
-
-## 리팩토링 메모
-
-현재 구조에서 `TweenBehaviour`는 runner, `TweenCase`는 실행 가능한 handle에 가까운 역할, `TweenBucket`은 playback loop에 가까운 역할을 합니다.
-
-앞으로 정리할 수 있는 방향:
-
-- tween 실행기를 Unity `MonoBehaviour`에서 분리
-- tween을 awaitable `Task`로 사용할 수 있게 개선
-- 외부 module이 `TweenBehaviour`를 직접 몰라도 되도록 runner abstraction 도입
-- `ITweenRunner` 주입을 통해 tween 실행
-- 외부에는 `TweenCase`보다 `ITweenHandle` 중심 API 제공
-- test 가능한 순수 playback loop 추가
-
-예상 역할 분리:
-
-```text
-ITweenRunner
-  외부가 의존하는 실행 서비스 contract
-
-TweenRunner
-  실제 tween 실행 service
-
-TweenPlaybackLane
-  update method별 playback loop
-
-TweenHandle
-  외부 제어와 await 지원을 위한 handle
-
-TweenBehaviour
-  Unity Update를 TweenRunner에 전달하는 adapter
-
-TweenCase
-  실행 가능한 concrete playable
-```
-
-Layer 방향:
-
-```text
-Domain
-  - 순수 easing 규칙
-  - Unity 실행 환경을 모르는 계산
-  - side effect가 거의 없는 value 계산
-
-App
-  - TweenRunner
-  - TweenPlaybackLane
-  - TweenHandle
-  - TweenCase lifecycle
-
-Framework
-  - Transform, Renderer, UI 등 Unity object에 실제 side effect 적용
-```

@@ -8,10 +8,21 @@ namespace SWeetJelly.Tween.Framework.Unity
     public sealed class TweenBehaviour : MonoBehaviour
     {
         private TweenService service;
+        public bool IsBound => service != null;
 
         public void Bind(TweenService tweenService)
         {
-            service = tweenService ?? throw new ArgumentNullException(nameof(tweenService));
+            if (tweenService == null) throw new ArgumentNullException(nameof(tweenService));
+            if (service != null && !ReferenceEquals(service, tweenService))
+                throw new InvalidOperationException("The tween driver is already bound.");
+            service = tweenService;
+        }
+
+        public bool Unbind(TweenService expectedService)
+        {
+            if (!ReferenceEquals(service, expectedService) || service == null) return false;
+            service = null;
+            return true;
         }
 
         private void Update()

@@ -108,6 +108,8 @@ namespace SWeetJelly.Samples.Tween
         private LayoutElement layoutBlockElement;
         private Sprite runtimeSprite;
         private Texture2D runtimeTexture;
+        private GameObject ownedPanel;
+        private Canvas ownedCanvas;
         private string status = "Waiting for Tween service...";
         private bool faded;
         private bool swatchFaded;
@@ -121,6 +123,7 @@ namespace SWeetJelly.Samples.Tween
         {
             BootstrapperBehaviour.Bootstrapped += OnBootstrapped;
             EnsureVisuals();
+            if (ownedPanel != null) ownedPanel.SetActive(true);
             ResolveIfReady();
         }
 
@@ -128,10 +131,14 @@ namespace SWeetJelly.Samples.Tween
         {
             BootstrapperBehaviour.Bootstrapped -= OnBootstrapped;
             KillActive();
+            tweenService = null;
+            if (ownedPanel != null) ownedPanel.SetActive(false);
         }
 
         private void OnDestroy()
         {
+            if (ownedPanel != null) Destroy(ownedPanel);
+            if (ownedCanvas != null) Destroy(ownedCanvas.gameObject);
             if (runtimeSprite != null)
                 Destroy(runtimeSprite);
 
@@ -423,6 +430,7 @@ namespace SWeetJelly.Samples.Tween
                 : CreateCanvas();
 
             var panel = new GameObject(panelObjectName);
+            ownedPanel = panel;
             panel.transform.SetParent(canvas.transform, false);
             panelGroup = panel.AddComponent<CanvasGroup>();
 
@@ -539,6 +547,7 @@ namespace SWeetJelly.Samples.Tween
         {
             var canvasObject = new GameObject(fallbackCanvasName);
             var canvas = canvasObject.AddComponent<Canvas>();
+            ownedCanvas = canvas;
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvasObject.AddComponent<CanvasScaler>();
             canvasObject.AddComponent<GraphicRaycaster>();

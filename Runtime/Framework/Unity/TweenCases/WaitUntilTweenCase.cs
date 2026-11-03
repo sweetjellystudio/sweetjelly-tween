@@ -9,6 +9,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         public WaitUntilTweenCase(Func<bool> predicate)
         {
             this.predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
+            SetDuration(float.MaxValue);
         }
 
         public override bool Validate()

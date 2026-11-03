@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using SWeetJelly.Tween.Contract;
 using UnityEngine;
 using UnityEngine.Events;
@@ -15,287 +17,173 @@ namespace SWeetJelly.Tween.Framework.Unity
         [SerializeField] private UnityEvent completed;
         [SerializeField] private UnityEvent killed;
 
-        private readonly List<TweenPlayerBehaviour> trackedPlayers = new();
+        private readonly List<ChildRun> children = new();
+        private int generation;
         private int completedCount;
-        private int killedCount;
-        private bool completedEventInvoked;
-        private bool killedEventInvoked;
-        private bool suppressKilledEvent;
+        private bool isPlaying;
+        private bool starting;
+        private bool initialising;
 
-        public override bool IsPlaying
-        {
-            get
-            {
-                if (players == null)
-                    return false;
+        public override bool IsPlaying => isPlaying;
 
-                for (int i = 0; i < players.Length; i++)
-                {
-                    TweenPlayerBehaviour player = players[i];
+        private void OnEnable() { if (playOnEnable) Play(); }
+        private void OnDisable() => Kill();
 
-                    if (player != null && player.IsPlaying)
-                        return true;
-                }
-
-                return false;
-            }
-        }
-
-        private void OnEnable()
-        {
-            if (playOnEnable)
-                Play();
-        }
-
-        private void OnDisable()
-        {
-            Kill();
-            ClearTracking();
-        }
-
-        public override void Play()
-        {
-            PlayEach(player => player.Play());
-        }
-
-        public override void Play(bool forward)
-        {
-            if (forward)
-                PlayForward();
-            else
-                PlayBackward();
-        }
-
-        public override void PlayForward()
-        {
-            PlayEach(player => player.PlayForward());
-        }
-
-        public override void PlayBackward()
-        {
-            PlayEach(player => player.PlayBackward());
-        }
-
-        public override void Snap(bool forward)
-        {
-            if (forward)
-                SnapForward();
-            else
-                SnapBackward();
-        }
-
-        public override void SnapForward()
-        {
-            ClearTracking();
-
-            if (players != null)
-            {
-                for (int i = 0; i < players.Length; i++)
-                {
-                    TweenPlayerBehaviour player = players[i];
-
-                    if (player != null)
-                        player.SnapForward();
-                }
-            }
-
-            InvokePlayed();
-            InvokeCompleted();
-        }
-
-        public override void SnapBackward()
-        {
-            ClearTracking();
-
-            if (players != null)
-            {
-                for (int i = 0; i < players.Length; i++)
-                {
-                    TweenPlayerBehaviour player = players[i];
-
-                    if (player != null)
-                        player.SnapBackward();
-                }
-            }
-
-            InvokePlayed();
-            InvokeCompleted();
-        }
-
-        public override void Kill()
-        {
-            bool hasPlayingPlayer = IsPlaying;
-            bool isTrackingPlayers = trackedPlayers.Count > 0;
-
-            if (players != null)
-            {
-                for (int i = 0; i < players.Length; i++)
-                {
-                    TweenPlayerBehaviour player = players[i];
-
-                    if (player != null)
-                        player.Kill();
-                }
-            }
-
-            if (!suppressKilledEvent && !isTrackingPlayers && hasPlayingPlayer)
-                InvokeKilled();
-        }
-
-        public override void SetPlayOnEnable(bool playOnEnable)
-        {
-            this.playOnEnable = playOnEnable;
-        }
+        public override void Play() => PlayEach(player => player.Play());
+        public override void Play(bool forward) { if (forward) PlayForward(); else PlayBackward(); }
+        public override void PlayForward() => PlayEach(player => player.PlayForward());
+        public override void PlayBackward() => PlayEach(player => player.PlayBackward());
+        public override void Snap(bool forward) { if (forward) SnapForward(); else SnapBackward(); }
+        public override void SnapForward() => SnapEach(player => player.SnapForward());
+        public override void SnapBackward() => SnapEach(player => player.SnapBackward());
+        public override void Kill() { if (isPlaying) Finish(true); }
+        public override void SetPlayOnEnable(bool playOnEnable) => this.playOnEnable = playOnEnable;
 
         public override void Initialise(ITweenService tweenService)
         {
-            if (players == null)
-                return;
-
-            for (int i = 0; i < players.Length; i++)
-            {
-                TweenPlayerBehaviour player = players[i];
-
-                if (player != null && player != this)
-                    player.Initialise(tweenService);
-            }
+            if (initialising) throw new InvalidOperationException("TweenPlayer composition contains a cycle.");
+            initialising = true;
+            try { foreach (var player in Members(false)) player.Initialise(tweenService); }
+            finally { initialising = false; }
         }
 
-        private void PlayEach(PlayerAction action)
+        private IEnumerable<TweenPlayerBehaviour> Members(bool activeOnly)
         {
-            if (!isActiveAndEnabled)
-                return;
-
-            ClearTracking();
-            BeginTracking();
-
-            InvokePlayed();
-
-            if (trackedPlayers.Count == 0)
-            {
-                InvokeCompleted();
-                return;
-            }
-
-            suppressKilledEvent = true;
-
-            for (int i = 0; i < trackedPlayers.Count; i++)
-                action(trackedPlayers[i]);
-
-            suppressKilledEvent = false;
-
-            TryInvokeCompleted();
-            TryInvokeKilled();
+            if (players == null) yield break;
+            var seen = new HashSet<TweenPlayerBehaviour>();
+            foreach (var player in players)
+                if (player != null && player != this && (!activeOnly || player.isActiveAndEnabled) && seen.Add(player))
+                    yield return player;
         }
 
-        private void BeginTracking()
+        private bool StopForReplacement()
         {
+            int expected = generation + (isPlaying ? 1 : 0);
+            if (isPlaying) Finish(true, false);
+            return generation == expected;
+        }
+
+        private void PlayEach(Action<TweenPlayerBehaviour> action)
+        {
+            if (!isActiveAndEnabled) return;
+            if (starting && isPlaying) throw new InvalidOperationException("TweenPlayer composition contains a playback cycle.");
+            if (!StopForReplacement()) return;
+            int run = ++generation;
             completedCount = 0;
-            killedCount = 0;
-            completedEventInvoked = false;
-            killedEventInvoked = false;
-
-            if (players == null)
-                return;
-
-            for (int i = 0; i < players.Length; i++)
+            isPlaying = true;
+            foreach (var player in Members(true))
             {
-                TweenPlayerBehaviour player = players[i];
-
-                if (player == null || player == this || !player.isActiveAndEnabled)
-                    continue;
-
-                trackedPlayers.Add(player);
-                player.Completed += OnPlayerCompleted;
-                player.Killed += OnPlayerKilled;
+                var child = new ChildRun { Player = player };
+                child.Completed = () => OnChildFinished(child, run, false);
+                child.Killed = () => OnChildFinished(child, run, true);
+                children.Add(child);
+                player.Completed += child.Completed;
+                player.Killed += child.Killed;
             }
+            var snapshot = children.ToArray();
+            starting = true;
+            try
+            {
+                NotifyPlayed();
+                played?.Invoke();
+                if (run != generation || !isPlaying) return;
+                if (snapshot.Length == 0) { Finish(false); return; }
+                foreach (var child in snapshot)
+                {
+                    if (run != generation || !isPlaying) return;
+                    if (child.Player == null || !child.Player.isActiveAndEnabled) { Finish(true); return; }
+                    child.Started = true;
+                    action(child.Player);
+                }
+            }
+            catch
+            {
+                if (run == generation && isPlaying) { try { Finish(true); } catch { } }
+                throw;
+            }
+            finally { starting = false; }
         }
 
-        private void ClearTracking()
+        private void OnChildFinished(ChildRun child, int run, bool wasKilled)
         {
-            for (int i = 0; i < trackedPlayers.Count; i++)
-            {
-                TweenPlayerBehaviour player = trackedPlayers[i];
-
-                if (player == null)
-                    continue;
-
-                player.Completed -= OnPlayerCompleted;
-                player.Killed -= OnPlayerKilled;
-            }
-
-            trackedPlayers.Clear();
-            completedCount = 0;
-            killedCount = 0;
-            completedEventInvoked = false;
-            killedEventInvoked = false;
-            suppressKilledEvent = false;
-        }
-
-        private void OnPlayerCompleted()
-        {
+            if (run != generation || !isPlaying || !child.Started || child.Finished) return;
+            child.Finished = true;
+            if (wasKilled) { Finish(true); return; }
             completedCount++;
-            TryInvokeCompleted();
+            if (completedCount == children.Count) Finish(false);
         }
 
-        private void OnPlayerKilled()
+        private void Finish(bool wasKilled, bool notify = true)
         {
-            killedCount++;
+            if (!isPlaying) return;
+            var snapshot = children.ToArray();
+            children.Clear();
+            isPlaying = false;
+            generation++;
+            ExceptionDispatchInfo failure = null;
+            foreach (var child in snapshot)
+            {
+                if (child.Player == null) continue;
+                TryCleanup(() => child.Player.Completed -= child.Completed, ref failure);
+                TryCleanup(() => child.Player.Killed -= child.Killed, ref failure);
+            }
+            if (wasKilled)
+                foreach (var child in snapshot)
+                    if (child.Started && !child.Finished && child.Player != null)
+                        TryCleanup(() => child.Player.Kill(), ref failure);
 
-            if (!suppressKilledEvent)
-                TryInvokeKilled();
+            if (notify)
+            {
+                if (wasKilled)
+                {
+                    TryCleanup(NotifyKilled, ref failure);
+                    TryCleanup(() => killed?.Invoke(), ref failure);
+                }
+                else
+                {
+                    TryCleanup(NotifyCompleted, ref failure);
+                    TryCleanup(() => completed?.Invoke(), ref failure);
+                }
+            }
+            failure?.Throw();
         }
 
-        private void TryInvokeCompleted()
+        private void SnapEach(Action<TweenPlayerBehaviour> action)
         {
-            if (completedEventInvoked)
-                return;
-
-            if (trackedPlayers.Count == 0)
-                return;
-
-            if (completedCount < trackedPlayers.Count)
-                return;
-
-            InvokeCompleted();
-            ClearTracking();
+            if (!StopForReplacement()) return;
+            int run = ++generation;
+            isPlaying = true;
+            try
+            {
+                NotifyPlayed();
+                played?.Invoke();
+                foreach (var player in Members(false))
+                {
+                    if (run != generation || !isPlaying) return;
+                    action(player);
+                }
+                if (run == generation && isPlaying) Finish(false);
+            }
+            catch
+            {
+                if (run == generation && isPlaying) { try { Finish(true); } catch { } }
+                throw;
+            }
         }
 
-        private void TryInvokeKilled()
+        private static void TryCleanup(Action action, ref ExceptionDispatchInfo failure)
         {
-            if (killedEventInvoked)
-                return;
-
-            if (trackedPlayers.Count == 0)
-                return;
-
-            if (killedCount < trackedPlayers.Count)
-                return;
-
-            InvokeKilled();
-            ClearTracking();
+            try { action(); }
+            catch (Exception error) { if (failure == null) failure = ExceptionDispatchInfo.Capture(error); }
         }
 
-        private void InvokePlayed()
+        private sealed class ChildRun
         {
-            NotifyPlayed();
-            played?.Invoke();
+            public TweenPlayerBehaviour Player;
+            public Action Completed;
+            public Action Killed;
+            public bool Started;
+            public bool Finished;
         }
-
-        private void InvokeCompleted()
-        {
-            completedEventInvoked = true;
-            NotifyCompleted();
-            completed?.Invoke();
-        }
-
-        private void InvokeKilled()
-        {
-            killedEventInvoked = true;
-            NotifyKilled();
-            killed?.Invoke();
-        }
-
-        private delegate void PlayerAction(TweenPlayerBehaviour player);
     }
 }

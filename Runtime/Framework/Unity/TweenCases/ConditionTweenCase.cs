@@ -9,6 +9,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         public ConditionTweenCase(Action<ConditionTweenCase> callback)
         {
             this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
+            SetDuration(float.MaxValue);
         }
 
         public override bool Validate()

@@ -1,25 +1,26 @@
-﻿{
-    "name":  "com.sweetjelly.tween",
-    "version":  "1.1.2",
-    "displayName":  "SWeetJelly Tween",
-    "description":  "This is SWeetJelly Tween",
-    "unity":  "2022.3",
-    "dependencies":  {
-                         "com.sweetjelly.bootstrapper":  "1.0.0",
-                         "com.sweetjelly.utils":  "1.1.0",
-                         "com.unity.textmeshpro":  "3.0.6"
-                     },
-    "author":  {
-                   "name":  "SWeetJellyStudio",
-                   "email":  "sweetjellystudio@gmail.com",
-                   "url":  "https://www.sweetjellystudio.com"
-               },
-    "samples":  [
-                    {
-                        "displayName":  "Tween Sample",
-                        "description":  "Sample scene and assets for Tween Sample.",
-                        "path":  "Samples~/Basic"
-                    }
-                ],
-    "license":  "MIT"
+{
+    "name": "com.sweetjelly.tween",
+    "version": "2.0.0",
+    "displayName": "SWeetJelly Tween",
+    "description": "This is SWeetJelly Tween",
+    "unity": "6000.3",
+    "dependencies": {
+        "com.sweetjelly.bootstrapper": "2.0.0",
+        "com.unity.ugui": "2.0.0",
+        "com.unity.modules.audio": "1.0.0",
+        "com.unity.modules.animation": "1.0.0"
+    },
+    "author": {
+        "name": "SWeetJellyStudio",
+        "email": "sweetjellystudio@gmail.com",
+        "url": "https://www.sweetjellystudio.com"
+    },
+    "samples": [
+        {
+            "displayName": "Tween Sample",
+            "description": "Sample scene and assets for Tween Sample.",
+            "path": "Samples~/Basic"
+        }
+    ],
+    "license": "MIT"
 }

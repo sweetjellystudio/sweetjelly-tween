@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2402613757c02da449584bdd32089681, type: 3}
   m_Name: Tween Package Bootstrapper
   m_EditorClassIdentifier: 
-  installOrder: 100
+  bootstrapOrder: 100

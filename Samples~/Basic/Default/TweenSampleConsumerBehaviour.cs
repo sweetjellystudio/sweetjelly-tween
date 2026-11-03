@@ -64,6 +64,8 @@ namespace SWeetJelly.Samples.Tween
         private Transform target;
         private Renderer targetRenderer;
         private Camera targetCamera;
+        private GameObject ownedCamera;
+        private Material ownedMaterial;
         private string status = "Waiting for Tween service...";
         private bool wideFieldOfView;
         private bool moved;
@@ -75,6 +77,7 @@ namespace SWeetJelly.Samples.Tween
         {
             BootstrapperBehaviour.Bootstrapped += OnBootstrapped;
             EnsureTarget();
+            target.gameObject.SetActive(true);
             ResolveIfReady();
         }
 
@@ -82,6 +85,15 @@ namespace SWeetJelly.Samples.Tween
         {
             BootstrapperBehaviour.Bootstrapped -= OnBootstrapped;
             KillActive();
+            tweenService = null;
+            if (target != null) target.gameObject.SetActive(false);
+        }
+
+        private void OnDestroy()
+        {
+            if (target != null) Destroy(target.gameObject);
+            if (ownedMaterial != null) Destroy(ownedMaterial);
+            if (ownedCamera != null) Destroy(ownedCamera);
         }
 
         private void OnBootstrapped(object sender, EventArgs args)
@@ -347,6 +359,7 @@ namespace SWeetJelly.Samples.Tween
             targetObject.name = targetObjectName;
             target = targetObject.transform;
             targetRenderer = targetObject.GetComponent<Renderer>();
+            ownedMaterial = targetRenderer.material;
             ResetTarget();
         }
 
@@ -358,11 +371,12 @@ namespace SWeetJelly.Samples.Tween
             targetCamera = Camera.main;
 
             if (targetCamera == null)
-                targetCamera = FindObjectOfType<Camera>();
+                targetCamera = FindFirstObjectByType<Camera>();
 
             if (targetCamera == null)
             {
                 var cameraObject = new GameObject("Tween Sample Camera");
+                ownedCamera = cameraObject;
                 targetCamera = cameraObject.AddComponent<Camera>();
                 cameraObject.tag = "MainCamera";
             }

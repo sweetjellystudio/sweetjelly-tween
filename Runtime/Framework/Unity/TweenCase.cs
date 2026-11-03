@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using SWeetJelly.Tween.App;
 using SWeetJelly.Tween.Contract;
 using SWeetJelly.Tween.Domain;
@@ -59,14 +60,14 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public TweenCase SetDelay(float delay)
         {
-            this.delay = Math.Max(0f, delay);
+            this.delay = TweenTiming.Delay(delay);
             currentDelay = 0f;
             return this;
         }
 
         public TweenCase SetDuration(float duration)
         {
-            this.duration = Math.Max(0.0001f, duration);
+            this.duration = TweenTiming.Duration(duration);
             return this;
         }
 
@@ -121,7 +122,10 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             for (int i = 0; i < timeReachedCallbacks.Count; i++)
                 timeReachedCallbacks[i].Reset();
+            ResetPlaybackState();
         }
+
+        protected virtual void ResetPlaybackState() { }
 
         public void Deactivate()
         {
@@ -132,15 +136,16 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public TweenCase Kill()
         {
-            if (isKilling)
+            if (isKilling || isKilled || completedEventInvoked)
                 return this;
 
             IsActive = false;
             isKilling = true;
             isKilled = true;
+            isCompleted = false;
             isPaused = false;
 
-            Killed?.Invoke();
+            NotifyTerminal(Killed);
 
             return this;
         }
@@ -152,7 +157,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public TweenCase Complete()
         {
-            if (isCompleted)
+            if (isCompleted || isKilled)
                 return this;
 
             isPaused = false;
@@ -166,8 +171,19 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public TweenCase CompleteImmediately()
         {
+            if (isKilled || completedEventInvoked) return this;
             Complete();
-            ApplyCompletion();
+            if (isKilled) return this;
+            try { ApplyCompletion(); }
+            finally
+            {
+                if (completedEventInvoked)
+                {
+                    IsActive = false;
+                    isKilling = true;
+                    isPaused = false;
+                }
+            }
 
             // 완료된 tween도 playback lane에서 제거되어야 하므로 removal flag는 세움.
             // 단, 정상 완료는 Kill 이벤트를 발생시키지 않음.
@@ -224,6 +240,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public TweenCase Reset()
         {
+            if (IsActive) Kill();
             IsActive = false;
 
             state = 0f;
@@ -239,37 +256,21 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             for (int i = 0; i < timeReachedCallbacks.Count; i++)
                 timeReachedCallbacks[i].Reset();
+            ResetPlaybackState();
 
             return this;
         }
 
         public void UpdateState(float deltaTime)
         {
-            if (duration <= 0f)
-            {
-                state = 1f;
-                isCompleted = true;
-                InvokeTimeReachedCallbacks();
-                return;
-            }
-
-            state += Math.Min(1f, deltaTime / duration);
-
-            if (state >= 1f)
-            {
-                state = 1f;
-                isCompleted = true;
-            }
-
+            state = TweenTiming.Advance(state, duration, deltaTime);
+            if (state >= 1f) isCompleted = true;
             InvokeTimeReachedCallbacks();
         }
 
         public void UpdateDelay(float deltaTime)
         {
-            currentDelay += deltaTime;
-
-            if (currentDelay > delay)
-                currentDelay = delay;
+            currentDelay = TweenTiming.AdvanceDelay(currentDelay, delay, deltaTime);
         }
 
         public TweenCase AddOnCompleted(Action onCompleted)
@@ -298,11 +299,23 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public void InvokeCompleteEvent()
         {
-            if (completedEventInvoked)
+            if (completedEventInvoked || isKilled)
                 return;
 
             completedEventInvoked = true;
-            Completed?.Invoke();
+            NotifyTerminal(Completed);
+        }
+
+        private static void NotifyTerminal(Action callbacks)
+        {
+            if (callbacks == null) return;
+            ExceptionDispatchInfo failure = null;
+            foreach (Action callback in callbacks.GetInvocationList())
+            {
+                try { callback(); }
+                catch (Exception error) { if (failure == null) failure = ExceptionDispatchInfo.Capture(error); }
+            }
+            failure?.Throw();
         }
 
         public abstract void Invoke(float deltaTime);
@@ -314,7 +327,8 @@ namespace SWeetJelly.Tween.Framework.Unity
             if (timeReachedCallbacks.Count == 0)
                 return;
 
-            for (int i = 0; i < timeReachedCallbacks.Count; i++)
+            int count = timeReachedCallbacks.Count;
+            for (int i = 0; i < count && !isKilled; i++)
                 timeReachedCallbacks[i].TryInvoke(state);
         }
 

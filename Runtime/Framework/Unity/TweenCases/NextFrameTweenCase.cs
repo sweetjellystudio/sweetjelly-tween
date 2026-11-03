@@ -13,7 +13,10 @@ namespace SWeetJelly.Tween.Framework.Unity
         {
             this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
             this.framesOffset = Math.Max(1, framesOffset);
+            SetDuration(float.MaxValue);
         }
+
+        protected override void ResetPlaybackState() => elapsedFrames = 0;
 
         public override bool Validate()
         {

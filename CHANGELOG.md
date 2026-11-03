@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 2.0.0
+
+* [Changed] Require Unity 6.3 LTS, Bootstrapper 2.0.0 and uGUI 2.0.0; declare the runtime Audio/Animation modules and remove unused Utils/standalone TMP dependencies.
+* [Changed] Keep existing public/protected APIs, serialized player fields and GUIDs while separating pure timing calculations into Domain.
+* [Fixed] Protect callback-time scheduling, KillAll membership, duplicate playback, Tick reentry and recovery after execution failures.
+* [Fixed] Give handles terminal execution state and release ToTask completion/cancellation subscriptions and token registrations.
+* [Fixed] Roll back bootstrap failures, protect service/driver ownership, and close all owned work on shutdown.
+* [Fixed] Track Group/Sequence playback generations, propagate child cancellation and preserve replacement playback.
+* [Fixed] Apply finite/nonnegative timing rules and scaled-zero callback skipping consistently.
+* [Added] Add regression coverage, maintained architecture/decisions and migration guidance. Record the broader TweenPlayer await adapter as deferred work.
+
 ## v1.1.2
 
 * [Fixed] Changed tween player origin capture from `Awake` time to the start of forward playback so backward playback restores the actual pre-tween value.
