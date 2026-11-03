@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using SWeetJelly.Tween.Contract;
 
 namespace SWeetJelly.Tween.App
@@ -10,6 +12,18 @@ namespace SWeetJelly.Tween.App
         private readonly List<ITweenPlayable> pendingAdd = new();
 
         private bool isTicking;
+
+        internal void PrepareToPlay(ITweenPlayable playable)
+        {
+            bool registered = active.Exists(item => ReferenceEquals(item, playable)) ||
+                pendingAdd.Exists(item => ReferenceEquals(item, playable));
+            if (!registered) return;
+            if (isTicking || playable.IsActive)
+                throw new InvalidOperationException("The previous playback must leave its lane before reuse.");
+            active.RemoveAll(item => ReferenceEquals(item, playable));
+            pendingAdd.RemoveAll(item => ReferenceEquals(item, playable));
+            playable.Deactivate();
+        }
 
         public int Count => active.Count + pendingAdd.Count;
         public int MaxUsedCount { get; private set; }
@@ -55,85 +69,111 @@ namespace SWeetJelly.Tween.App
             float unscaledDeltaTime,
             bool skipScaledWhenTimeScaleIsZero)
         {
+            if (isTicking) throw new InvalidOperationException("Tick cannot reenter the same playback lane.");
             if (active.Count == 0 && pendingAdd.Count == 0)
                 return;
 
             isTicking = true;
+            ExceptionDispatchInfo failure = null;
 
-            int count = active.Count;
-
-            for (int i = 0; i < count; i++)
+            try
             {
-                ITweenPlayable playable = active[i];
-
-                if (playable == null)
-                    continue;
-
-                if (playable.IsKilling)
-                    continue;
-
-                if (!playable.Validate())
+                int count = active.Count;
+                for (int i = 0; i < count; i++)
                 {
-                    playable.Kill();
-                    continue;
-                }
-
-                if (!playable.IsActive || playable.IsPaused)
-                    continue;
-
-                float deltaTime = playable.IsUnscaled
-                    ? unscaledDeltaTime
-                    : scaledDeltaTime;
-
-                if (playable.Delay > 0f && playable.CurrentDelay < playable.Delay)
-                {
-                    float remainingDelay = playable.Delay - playable.CurrentDelay;
-
-                    if (deltaTime < remainingDelay)
+                    ITweenPlayable playable = active[i];
+                    if (playable == null || playable.IsKilling) continue;
+                    try
                     {
-                        playable.UpdateDelay(deltaTime);
-                        continue;
+                        if (!playable.Validate())
+                        {
+                            playable.Kill();
+                            continue;
+                        }
+                        if (!playable.IsActive || playable.IsPaused) continue;
+                        if (skipScaledWhenTimeScaleIsZero && !playable.IsUnscaled && scaledDeltaTime == 0f)
+                            continue;
+
+                        float deltaTime = playable.IsUnscaled ? unscaledDeltaTime : scaledDeltaTime;
+                        if (playable.Delay > 0f && playable.CurrentDelay < playable.Delay)
+                        {
+                            float remainingDelay = playable.Delay - playable.CurrentDelay;
+                            if (deltaTime < remainingDelay)
+                            {
+                                playable.UpdateDelay(deltaTime);
+                                continue;
+                            }
+                            playable.UpdateDelay(remainingDelay);
+                            deltaTime -= remainingDelay;
+                        }
+                        playable.UpdateState(deltaTime);
+                        if (!playable.IsActive || playable.IsKilled || playable.IsKilling) continue;
+                        playable.Invoke(deltaTime);
+                        if (playable.IsActive && !playable.IsKilled && playable.IsCompleted)
+                            playable.CompleteImmediately();
                     }
-
-                    playable.UpdateDelay(remainingDelay);
-                    deltaTime -= remainingDelay;
+                    catch
+                    {
+                        // Preserve the execution failure if a Kill callback also fails.
+                        try { playable.Kill(); } catch { }
+                        throw;
+                    }
                 }
-
-                playable.UpdateState(deltaTime);
-                playable.Invoke(deltaTime);
-
-                if (playable.IsCompleted)
-                    playable.CompleteImmediately();
             }
-
-            isTicking = false;
-
-            RemoveInactive();
-            FlushPendingAdd();
+            catch (Exception error) { failure = ExceptionDispatchInfo.Capture(error); }
+            finally
+            {
+                isTicking = false;
+                try { RemoveInactive(); }
+                catch (Exception error) { if (failure == null) failure = ExceptionDispatchInfo.Capture(error); }
+                finally { FlushPendingAdd(); }
+            }
+            failure?.Throw();
         }
 
         public void PauseAll()
         {
-            for (int i = 0; i < active.Count; i++)
-                active[i]?.Pause();
+            var targets = new List<ITweenPlayable>(active);
+            targets.AddRange(pendingAdd);
+            foreach (var playable in targets) playable?.Pause();
         }
 
         public void ResumeAll()
         {
-            for (int i = 0; i < active.Count; i++)
-                active[i]?.Resume();
+            var targets = new List<ITweenPlayable>(active);
+            targets.AddRange(pendingAdd);
+            foreach (var playable in targets) playable?.Resume();
         }
 
-        public void KillAll()
+        internal ITweenPlayable[] Snapshot()
         {
-            for (int i = 0; i < active.Count; i++)
-                active[i]?.Kill();
+            var targets = new List<ITweenPlayable>(active);
+            targets.AddRange(pendingAdd);
+            return targets.ToArray();
+        }
 
-            RemoveInactive();
+        public void KillAll() => KillSnapshot(Snapshot());
+
+        internal void KillSnapshot(ITweenPlayable[] targets)
+        {
+            ExceptionDispatchInfo failure = null;
+            for (int i = 0; i < targets.Length; i++)
+            {
+                try { targets[i]?.Kill(); }
+                catch (Exception error) { if (failure == null) failure = ExceptionDispatchInfo.Capture(error); }
+            }
+
+            if (!isTicking)
+            {
+                try { RemoveInactive(); }
+                catch (Exception error) { if (failure == null) failure = ExceptionDispatchInfo.Capture(error); }
+            }
+            failure?.Throw();
         }
 
         private void RemoveInactive()
         {
+            ExceptionDispatchInfo failure = null;
             for (int i = active.Count - 1; i >= 0; i--)
             {
                 ITweenPlayable playable = active[i];
@@ -146,10 +186,12 @@ namespace SWeetJelly.Tween.App
 
                 if (!playable.IsActive || playable.IsKilling)
                 {
-                    playable.Deactivate();
                     active.RemoveAt(i);
+                    try { playable.Deactivate(); }
+                    catch (Exception error) { if (failure == null) failure = ExceptionDispatchInfo.Capture(error); }
                 }
             }
+            failure?.Throw();
         }
 
         private void FlushPendingAdd()
@@ -157,7 +199,8 @@ namespace SWeetJelly.Tween.App
             if (pendingAdd.Count == 0)
                 return;
 
-            active.AddRange(pendingAdd);
+            foreach (var playable in pendingAdd)
+                if (playable != null && playable.IsActive && !playable.IsKilling) active.Add(playable);
             pendingAdd.Clear();
         }
     }

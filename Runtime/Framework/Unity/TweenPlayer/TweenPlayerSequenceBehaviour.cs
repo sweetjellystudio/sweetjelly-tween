@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SWeetJelly.Tween.Contract;
 using UnityEngine;
@@ -21,11 +22,16 @@ namespace SWeetJelly.Tween.Framework.Unity
         private readonly List<TweenPlayerBehaviour> sequence = new();
 
         private TweenPlayerBehaviour currentPlayer;
+        private Action currentCompleted;
+        private Action currentKilled;
+        private int generation;
         private PlaybackMode playbackMode;
         private int currentIndex;
         private int direction;
         private bool isSequencePlaying;
         private bool killedEventInvoked;
+        private bool initialising;
+        private bool starting;
 
         public override bool IsPlaying => isSequencePlaying;
 
@@ -120,11 +126,13 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             ClearCurrentPlayer();
             isSequencePlaying = false;
-
-            if (player != null)
-                player.Kill();
-
-            InvokeKilled();
+            generation++;
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo failure = null;
+            try { if (player != null) player.Kill(); }
+            catch (Exception error) { failure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+            try { InvokeKilled(); }
+            catch (Exception error) { if (failure == null) failure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+            failure?.Throw();
         }
 
         public override void SetPlayOnEnable(bool playOnEnable)
@@ -134,24 +142,29 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public override void Initialise(ITweenService tweenService)
         {
+            if (initialising) throw new InvalidOperationException("TweenPlayer composition contains a cycle.");
             if (players == null)
                 return;
-
-            for (int i = 0; i < players.Length; i++)
+            initialising = true;
+            try
             {
-                TweenPlayerBehaviour player = players[i];
-
-                if (player != null && player != this)
-                    player.Initialise(tweenService);
+                for (int i = 0; i < players.Length; i++)
+                {
+                    TweenPlayerBehaviour player = players[i];
+                    if (player != null && player != this) player.Initialise(tweenService);
+                }
             }
+            finally { initialising = false; }
         }
 
         private void StartSequence(PlaybackMode mode, bool reverse)
         {
             if (!isActiveAndEnabled)
                 return;
-
+            if (starting && isSequencePlaying) throw new InvalidOperationException("TweenPlayer composition contains a playback cycle.");
+            int expected = generation + 1;
             StopCurrentSilently();
+            if (generation != expected) return;
             BuildSequence();
 
             playbackMode = mode;
@@ -159,16 +172,26 @@ namespace SWeetJelly.Tween.Framework.Unity
             currentIndex = reverse ? sequence.Count - 1 : 0;
             isSequencePlaying = true;
             killedEventInvoked = false;
+            int run = ++generation;
 
-            InvokePlayed();
-
-            if (sequence.Count == 0)
+            starting = true;
+            try
             {
-                InvokeCompleted();
-                return;
+                InvokePlayed();
+                if (run != generation || !isSequencePlaying) return;
+                if (sequence.Count == 0)
+                {
+                    InvokeCompleted();
+                    return;
+                }
+                PlayCurrent();
             }
-
-            PlayCurrent();
+            catch
+            {
+                if (run == generation && isSequencePlaying) { try { Kill(); } catch { } }
+                throw;
+            }
+            finally { starting = false; }
         }
 
         private void BuildSequence()
@@ -201,22 +224,32 @@ namespace SWeetJelly.Tween.Framework.Unity
             }
 
             currentPlayer = sequence[currentIndex];
-            currentPlayer.Completed += OnCurrentPlayerCompleted;
-            currentPlayer.Killed += OnCurrentPlayerKilled;
-
-            switch (playbackMode)
+            var player = currentPlayer;
+            int run = generation;
+            currentCompleted = () =>
             {
-                case PlaybackMode.Default:
-                    currentPlayer.Play();
-                    break;
+                if (run == generation && ReferenceEquals(currentPlayer, player)) OnCurrentPlayerCompleted();
+            };
+            currentKilled = () =>
+            {
+                if (run == generation && ReferenceEquals(currentPlayer, player)) OnCurrentPlayerKilled();
+            };
+            currentPlayer.Completed += currentCompleted;
+            currentPlayer.Killed += currentKilled;
 
-                case PlaybackMode.Forward:
-                    currentPlayer.PlayForward();
-                    break;
-
-                case PlaybackMode.Backward:
-                    currentPlayer.PlayBackward();
-                    break;
+            try
+            {
+                switch (playbackMode)
+                {
+                    case PlaybackMode.Default: player.Play(); break;
+                    case PlaybackMode.Forward: player.PlayForward(); break;
+                    case PlaybackMode.Backward: player.PlayBackward(); break;
+                }
+            }
+            catch
+            {
+                if (run == generation && isSequencePlaying) { try { Kill(); } catch { } }
+                throw;
             }
         }
 
@@ -237,6 +270,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         private void StopCurrentSilently()
         {
+            generation++;
             TweenPlayerBehaviour player = currentPlayer;
 
             ClearCurrentPlayer();
@@ -250,10 +284,12 @@ namespace SWeetJelly.Tween.Framework.Unity
         {
             if (currentPlayer != null)
             {
-                currentPlayer.Completed -= OnCurrentPlayerCompleted;
-                currentPlayer.Killed -= OnCurrentPlayerKilled;
+                currentPlayer.Completed -= currentCompleted;
+                currentPlayer.Killed -= currentKilled;
                 currentPlayer = null;
             }
+            currentCompleted = null;
+            currentKilled = null;
         }
 
         private void InvokePlayed()

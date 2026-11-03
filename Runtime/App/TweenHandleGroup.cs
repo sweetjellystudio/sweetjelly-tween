@@ -1,165 +1,97 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
+using System.Runtime.ExceptionServices;
 using SWeetJelly.Tween.Contract;
 
 namespace SWeetJelly.Tween.App
 {
     public sealed class TweenHandleGroup : ITweenHandleGroup
     {
-        private readonly List<ITweenHandle> handles;
-        private int completedCount;
-        private int killedCount;
-        private bool completedEventInvoked;
-        private bool killedEventInvoked;
-
+        private readonly List<ITweenHandle> handles = new();
+        private bool terminal;
         public IReadOnlyList<ITweenHandle> Handles => handles;
-
-        public bool IsActive
-        {
-            get
-            {
-                for (int i = 0; i < handles.Count; i++)
-                {
-                    if (handles[i].IsActive)
-                        return true;
-                }
-
-                return false;
-            }
-        }
-
-        public bool IsCompleted
-        {
-            get
-            {
-                if (handles.Count == 0)
-                    return false;
-
-                for (int i = 0; i < handles.Count; i++)
-                {
-                    if (!handles[i].IsCompleted)
-                        return false;
-                }
-
-                return true;
-            }
-        }
-
-        public bool IsKilled
-        {
-            get
-            {
-                if (handles.Count == 0)
-                    return false;
-
-                for (int i = 0; i < handles.Count; i++)
-                {
-                    if (!handles[i].IsKilled)
-                        return false;
-                }
-
-                return true;
-            }
-        }
-
+        public bool IsActive => !terminal;
+        public bool IsCompleted { get; private set; }
+        public bool IsKilled { get; private set; }
         public event Action Completed;
         public event Action Killed;
 
         public TweenHandleGroup(IReadOnlyList<ITweenHandle> handles)
         {
-            if (handles == null)
-                throw new ArgumentNullException(nameof(handles));
-
-            this.handles = new List<ITweenHandle>(handles.Count);
-
+            if (handles == null) throw new ArgumentNullException(nameof(handles));
             for (int i = 0; i < handles.Count; i++)
             {
-                ITweenHandle handle = handles[i];
-
-                if (handle == null)
-                    continue;
-
-                this.handles.Add(handle);
-
-                if (handle.IsCompleted)
-                    completedCount++;
-
-                if (handle.IsKilled)
-                    killedCount++;
-
-                handle.Completed += OnHandleCompleted;
-                handle.Killed += OnHandleKilled;
+                var handle = handles[i];
+                if (handle != null && !this.handles.Contains(handle)) this.handles.Add(handle);
             }
-
-            TryInvokeCompleted();
-            TryInvokeKilled();
+            foreach (var handle in this.handles)
+            {
+                handle.Completed += Evaluate;
+                handle.Killed += Evaluate;
+            }
+            Evaluate();
         }
 
-        public void Pause()
-        {
-            for (int i = 0; i < handles.Count; i++)
-                handles[i].Pause();
-        }
-
-        public void Resume()
-        {
-            for (int i = 0; i < handles.Count; i++)
-                handles[i].Resume();
-        }
-
+        public void Pause() { if (!terminal) foreach (var handle in handles) handle.Pause(); }
+        public void Resume() { if (!terminal) foreach (var handle in handles) handle.Resume(); }
         public void Complete()
         {
-            for (int i = 0; i < handles.Count; i++)
-                handles[i].Complete();
+            if (terminal) return;
+            ExceptionDispatchInfo failure = null;
+            foreach (var handle in handles)
+            {
+                if (terminal) break;
+                try { handle.Complete(); }
+                catch (Exception error) { if (failure == null) failure = ExceptionDispatchInfo.Capture(error); }
+            }
+            failure?.Throw();
+        }
+        public void Kill() { if (!terminal) Finish(true); }
+
+        private void Evaluate()
+        {
+            if (terminal) return;
+            bool allCompleted = true;
+            foreach (var handle in handles)
+            {
+                if (handle.IsKilled) { Finish(true); return; }
+                if (!handle.IsCompleted) allCompleted = false;
+            }
+            if (allCompleted) Finish(false);
         }
 
-        public void Kill()
+        private void Finish(bool killed)
         {
-            for (int i = 0; i < handles.Count; i++)
-                handles[i].Kill();
-        }
-
-        private void OnHandleCompleted()
-        {
-            Interlocked.Increment(ref completedCount);
-            TryInvokeCompleted();
-        }
-
-        private void OnHandleKilled()
-        {
-            Interlocked.Increment(ref killedCount);
-            TryInvokeKilled();
-        }
-
-        private void TryInvokeCompleted()
-        {
-            if (completedEventInvoked)
-                return;
-
-            if (handles.Count == 0)
-                return;
-
-            if (completedCount < handles.Count)
-                return;
-
-            completedEventInvoked = true;
-            Completed?.Invoke();
-        }
-
-        private void TryInvokeKilled()
-        {
-            if (killedEventInvoked)
-                return;
-
-            if (handles.Count == 0)
-                return;
-
-            if (killedCount < handles.Count)
-                return;
-
-            killedEventInvoked = true;
-            Killed?.Invoke();
+            terminal = true;
+            IsKilled = killed;
+            IsCompleted = !killed;
+            var callbacks = killed ? Killed : Completed;
+            Completed = null;
+            Killed = null;
+            ExceptionDispatchInfo failure = null;
+            foreach (var handle in handles)
+            {
+                handle.Completed -= Evaluate;
+                handle.Killed -= Evaluate;
+            }
+            if (killed)
+            {
+                foreach (var handle in handles)
+                {
+                    if (!handle.IsActive) continue;
+                    try { handle.Kill(); }
+                    catch (Exception error) { if (failure == null) failure = ExceptionDispatchInfo.Capture(error); }
+                }
+            }
+            if (callbacks != null)
+            {
+                foreach (Action callback in callbacks.GetInvocationList())
+                {
+                    try { callback(); }
+                    catch (Exception error) { if (failure == null) failure = ExceptionDispatchInfo.Capture(error); }
+                }
+            }
+            failure?.Throw();
         }
     }
 }

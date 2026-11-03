@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.ExceptionServices;
 using UnityEngine;
 using SWeetJelly.Tween.Contract;
 using SWeetJelly.Tween.Domain;
@@ -42,12 +43,24 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         protected void NotifyCompleted()
         {
-            Completed?.Invoke();
+            NotifyTerminal(Completed);
         }
 
         protected void NotifyKilled()
         {
-            Killed?.Invoke();
+            NotifyTerminal(Killed);
+        }
+
+        private static void NotifyTerminal(Action callbacks)
+        {
+            if (callbacks == null) return;
+            ExceptionDispatchInfo failure = null;
+            foreach (Action callback in callbacks.GetInvocationList())
+            {
+                try { callback(); }
+                catch (Exception error) { if (failure == null) failure = ExceptionDispatchInfo.Capture(error); }
+            }
+            failure?.Throw();
         }
     }
 
@@ -277,11 +290,13 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public override void Kill()
         {
-            if (activeHandle == null)
+            pendingPlay = false;
+            var handle = activeHandle;
+            if (handle == null)
                 return;
 
-            activeHandle.Kill();
             activeHandle = null;
+            handle.Kill();
         }
 
         public override void SetPlayOnEnable(bool playOnEnable)
@@ -345,8 +360,6 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             ITweenHandle handle = tweenService.Play(tweenCase);
             activeHandle = handle;
-            NotifyPlayed();
-            played?.Invoke();
 
             if (ShouldContinueLoop())
             {
@@ -358,6 +371,16 @@ namespace SWeetJelly.Tween.Framework.Unity
             }
 
             handle.Killed += OnKilled;
+            try
+            {
+                NotifyPlayed();
+                played?.Invoke();
+            }
+            catch
+            {
+                if (ReferenceEquals(activeHandle, handle)) { try { Kill(); } catch { } }
+                throw;
+            }
         }
 
         protected virtual bool ShouldContinueLoop()
@@ -422,9 +445,10 @@ namespace SWeetJelly.Tween.Framework.Unity
                 return;
 
             suppressKilledEvent = true;
-            activeHandle.Kill();
-            suppressKilledEvent = false;
+            var handle = activeHandle;
             activeHandle = null;
+            try { handle.Kill(); }
+            finally { suppressKilledEvent = false; }
         }
 
         private void CompleteWithoutPlayback()

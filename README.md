@@ -1,245 +1,75 @@
-# README
+#   SWeetJelly Tween
 
-For designer-facing TweenPlayer usage, see `Documentation~/TweenPlayerDesignerGuide.ko.md`.
+Reusable easing, fluent Unity target tweens, execution handles/Task adapters and designer-facing TweenPlayers. Requires Unity 6.3 LTS.
 
-## tween module
+##  Installation
 
-```plantuml
-@startuml
+After publishing the version tag, add the custom Git dependencies to the consuming project's Packages/manifest.json:
 
-package "Contract" {
-  interface IEasingFunction
+```json
+{
+  "dependencies": {
+    "com.sweetjelly.tween": "https://github.com/sweetjellystudio/sweetjelly-tween.git#v2.0.0",
+    "com.sweetjelly.bootstrapper": "https://github.com/sweetjellystudio/sweetjelly-bootstrapper.git#v2.0.0"
+  }
 }
-
-package "Domain" {
-  enum EaseType
-  class EasingFunctionFactory
-  class EasingFunctions
-  class EasingMath
-  class DelegateEasingFunction
-}
-
-package "Framework" {
-  class TweenBehaviour
-  class TweenBucket
-  abstract TweenCase
-  abstract TweenValueCase
-  class TweenCaseGroup
-  class TweenCasePlayExtensions
-  class TweenCaseControlExtensions
-  enum UpdateMethod
-
-  class AnimationCurveEasingFunction
-  class EasingConfigSo
-  class EasingFunctionCatalog
-}
-
-package "Framework.Bootstrapper" {
-  class TweenPackageBootstrapperSo
-}
-
-TweenBehaviour --> TweenBucket
-TweenBucket --> TweenCase
-TweenValueCase --|> TweenCase
-TweenCase --> IEasingFunction
-TweenCase --> UpdateMethod
-TweenCaseGroup --> TweenCase
-TweenCasePlayExtensions --> TweenBehaviour
-TweenCasePlayExtensions --> TweenCase
-AnimationCurveEasingFunction ..|> IEasingFunction
-EasingFunctions --> IEasingFunction
-TweenPackageBootstrapperSo --> TweenBehaviour
-
-@enduml
 ```
 
-## Easing
+The package declares Bootstrapper 2.0.0, uGUI 2.0.0 and the Audio/Animation built-in modules it uses. TMP APIs retain Unity.TextMeshPro references; no standalone TMP or Utils package is required. The example does not claim an unpublished tag is available. License: [MIT][license].
 
-## Concrete TweenCase in Framework
+##  Code consumption
 
-### Animation
-
-### Audio
-
-### Camera
-
-### Graphic
-
-### Image
-
-### Material
-
-### Particle
-
-### RectTransform
+Add TweenPackageBootstrapperSo to a Bootstrapper profile and resolve ITweenService, or manually compose a concrete service and driver:
 
 ```csharp
-rectTransform
-    .DOAnchoredPosition(new Vector2(100f, 0f), 0.3f)
-    .SetEasing(EaseType.SineOut)
-    .Play(tweenBehaviour);
+using SWeetJelly.Tween.App;
+using SWeetJelly.Tween.Contract;
+using SWeetJelly.Tween.Framework.Unity;
+
+var service = new TweenService();
+driver.Bind(service); // TweenBehaviour supplies Unity frame deltas.
+ITweenHandle handle = service.Play(
+    transform.DOMove(new UnityEngine.Vector3(0f, 2f, 0f), 0.3f)
+        .SetEasing(EaseType.SineOut));
+await handle.ToTask(cancellationToken);
+// At the owner's shutdown:
+driver.Unbind(service);
+service.Dispose();
 ```
 
-```csharp
-graphic
-    .DOAnchoredPositionShake(10f, 0.25f)
-    .Play(tweenBehaviour);
-```
+The owner must put shutdown in its normal lifecycle/finally path, including cancellation or errors. Bootstrapper performs that ownership automatically. Manual simulation can call TweenService.Tick with an UpdateMethod and explicit scaled/unscaled deltas instead of binding a Unity driver.
 
-```csharp
-rectTransform
-    .DOSize(new Vector2(300f, 100f), 0.2f)
-    .Play(tweenBehaviour);
-```
+ITweenService provides Play/PlayGroup and Pause/Resume/Kill controls. Handles observe one execution, expose Completed/Killed and support ToTask. The existing service.PlayAsync extensions remain available. Kill/token cancellation produces a canceled Task; normal completion succeeds. Use a new handle when replaying a case.
 
-### Renderer
+Use the App namespace for the fluent Play extension with an ITweenService. The Unity driver is an adapter, not the old runner described by historical TweenBucket diagrams.
 
-```csharp
-private static readonly int ColorId = Shader.PropertyToID("_BaseColor");
-private static readonly int CutoffId = Shader.PropertyToID("_Cutoff");
+##  Supported presentation adapters
 
-renderer
-    .DOPropertyBlockColor(ColorId, Color.red, 0.3f)
-    .Play(tweenBehaviour);
+*   Transform position/rotation/scale, path/follow/shake and axis variants.
+*   RectTransform position/size, CanvasGroup, Graphic, Image and LayoutElement.
+*   Renderer property-block values, SpriteRenderer, Camera and AudioSource.
+*   Legacy Text/TextMesh and TMP font-size output.
+*   Delay, condition/frame waits and AsyncOperation/legacy Animation observation.
+*   Property TweenPlayers, Group, Sequence and Animator trigger/state players.
 
-renderer
-    .DOPropertyBlockFloat(CutoffId, 1f, 0.3f)
-    .Play(tweenBehaviour);
-```
+TweenCase keeps its existing fluent/protected consumption surface. Unity adapters validate targets and apply values, while pure easing/timing calculations and scheduling remain independent of Unity. Read [architecture][architecture] and [migration][migration] for the precise rules and intentional behavior changes.
 
-### SpriteRenderer
+Serialize service/configuration/cancellation calls; Unity targets and token cancellation use the main thread. Execution exceptions propagate after required cleanup; there is no automatic worker queue. An active playable cannot be scheduled twice, and same-lane Tick reentry is rejected. Newly scheduled callback work waits for a later Tick.
 
-Graphic 때와 같아. 같은 SpriteRenderer에 DOColor와 DOFade를 동시에 걸면 둘 다 color 전체를 다시 세팅하기 때문에 서로 값을 덮어쓸 수 있음. 같은 target에는 color tween과 fade tween을 동시에 걸지 않는 쪽이 안전해.
+##  Designer workflows and samples
 
-### TweenCases
+The [TweenPlayer designer guide][designer] covers capture-on-forward/configured endpoints, direction, Snap, looping, injection and composition. The [Animator guide][animator] covers trigger/state authoring; forward/backward commands do not mean reverse-time clip playback.
 
-```plantuml
-TweenCases
-AsyncOperationTweenExtensions
+Import Tween Sample through Package Manager. Open a scene under Default, UI or TweenPlayer. The UI sample uses TMP; import TMP Essential Resources in a fresh consumer if its default font/settings are absent. The sample profile uses current Bootstrapper fields. The sample owns its demonstration controls and generated visuals; core presentation players belong to this package.
 
-DelayTweenCase
-FloatTweenCase
-ColorTweenCase
-ActionTweenCase<T>
-ConditionTweenCase
-WaitUntilTweenCase
-NextFrameTweenCase
-AsyncOperationTweenCase
-```
+Tests and environment-specific verification are described in [Tests/README][tests]. See the [accepted decision][adr] and [glossary][glossary] when changing semantics. A broader TweenPlayer await surface is a [deferred follow-up][todo], not part of this version's public API. Publishing and public-tag installation verification are separate tasks.
 
-```csharp
-TweenCases
-    .DelayedCall(0.5f, () => Debug.Log("Done"))
-    .Play(tweenBehaviour);
-```
-
-```csharp
-TweenCases
-    .DOFloat(0f, 1f, 0.25f, value => canvasGroup.alpha = value)
-    .SetEasing(EaseType.SineOut)
-    .Play(tweenBehaviour);
-```
-
-```csharp
-TweenCases
-    .NextFrame(() => Debug.Log("Next frame"))
-    .Play(tweenBehaviour);
-```
-
-```csharp
-operation
-    .OnCompleted(() => Debug.Log("Load completed"))
-    .Play(tweenBehaviour);
-```
-
-### Text
-
-```plantuml
-TextTweenExtensions
-
-UnityTextFontSizeTweenCase
-TextMeshFontSizeTweenCase
-TextMeshFadeTweenCase
-TextMeshColorTweenCase
-TMPTextFontSizeTweenCase
-```
-
-```csharp
-legacyText
-    .DOFontSize(32, 0.25f)
-    .SetEasing(EaseType.SineOut)
-    .Play(tweenBehaviour);
-```
-
-```csharp
-textMesh
-    .DOFade(0f, 0.2f)
-    .Play(tweenBehaviour);
-```
-
-```csharp
-tmpText
-    .DOFontSize(42f, 0.3f)
-    .Play(tweenBehaviour);
-```
-
-### Transform
-
-```plantuml
-TransformTweenExtensions
-
-TransformPositionTweenCase
-TransformPositionAxisTweenCase
-TransformLocalPositionTweenCase
-TransformLocalPositionAxisTweenCase
-TransformScaleTweenCase
-TransformScaleAxisTweenCase
-TransformRotationEulerTweenCase
-TransformRotationQuaternionTweenCase
-TransformLocalRotationEulerTweenCase
-TransformLocalRotationQuaternionTweenCase
-TransformConstantRotationTweenCase
-TransformPathTweenCase
-TransformBezierPositionTweenCase
-TransformFollowTweenCase
-TransformBezierFollowTweenCase
-TransformPushScaleTweenCase
-TransformPingPongScaleTweenCase
-TransformLookAtTweenCase
-TransformLookAt2DTweenCase
-TransformShakeTweenCase
-```
-
-```csharp
-transform
-    .DOMove(new Vector3(0f, 2f, 0f), 0.3f)
-    .SetEasing(EaseType.SineOut)
-    .Play(tweenBehaviour);
-```
-
-```csharp
-transform
-    .DOScale(1.2f, 0.2f)
-    .Play(tweenBehaviour);
-```
-
-```csharp
-transform
-    .DORotate(new Vector3(0f, 180f, 0f), 0.5f)
-    .SetEasing(EaseType.SineInOut)
-    .Play(tweenBehaviour);
-```
-
-```csharp
-transform
-    .DOShake(0.2f, 0.3f)
-    .Play(tweenBehaviour);
-```
-
-### UI
-
-```plantuml
-UITweenExtensions
-LayoutElementPreferredHeightTweenCase
-CanvasGroupFadeTweenCase
-```
+[license]: LICENSE.md
+[architecture]: ARCHITECTURE.md
+[migration]: Documentation~/migration-2.0.md
+[designer]: Documentation~/TweenPlayerDesignerGuide.ko.md
+[animator]: Documentation~/AnimatorTweenPlayerDesignerGuide.ko.md
+[tests]: Tests/README.md
+[adr]: docs/adr/0001-playback-rules-and-owned-lifetime.md
+[glossary]: GLOSSARY.md
+[todo]: Documentation~/TODO.md

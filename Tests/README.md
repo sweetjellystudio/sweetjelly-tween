@@ -1,3 +1,13 @@
+# Tween 2.0 validation
+
+Run package tests through a Unity 6.3 LTS consumer with `com.sweetjelly.tween` in the project's `testables`. Use the declared dependencies and import the sample through Package Manager. The development host records the exact Editor patch, executed counts, source fingerprint and separate consumer/Player results.
+
+EditMode covers pure timing/easing, finite inputs, delay, negative delta, scaled-zero rules, scheduler mutation/reentry, failed execution cleanup, duplicate/replayed cases, terminal observers, handle/Task cleanup, mixed handle groups, partial-start rollback, bootstrap/driver ownership, and property/Group/Sequence lifetime. The tests use public APIs; composition arrays use Unity's serialized authoring boundary.
+
+PlayMode covers actual driver Update, stopped scaled time with continuing unscaled playback, destroyed-target cancellation, and the existing capture/configured endpoints and Snap regressions. Actual Default/UI/TweenPlayer samples, TMP, Inspector and Animator controller checks complement these tests. Windows ordinary Mono and IL2CPP Players are separate checks; an Editor pass does not establish another backend or platform.
+
+The original test descriptions follow. They describe baseline coverage and are not the complete 2.0 verification matrix.
+
 # Tween Tests
 
 이 폴더는 `com.sweetjelly.tween` 패키지를 현재 Unity 테스트 프로젝트에서 검증하기 위한 테스트를 담는다.

@@ -30,6 +30,7 @@ namespace SWeetJelly.Samples.Tween
         private void OnDisable()
         {
             BootstrapperBehaviour.Bootstrapped -= OnBootstrapped;
+            tweenService = null;
         }
 
         private void OnBootstrapped(object sender, EventArgs args)
@@ -76,12 +77,9 @@ namespace SWeetJelly.Samples.Tween
         {
             var count = 0;
 
-            foreach (var behaviour in FindObjectsOfType<MonoBehaviour>())
+            foreach (var player in FindObjectsByType<TweenPlayerBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
-                if (!IsTweenPlayer(behaviour))
-                    continue;
-
-                behaviour.SendMessage("Inject", tweenService, SendMessageOptions.RequireReceiver);
+                player.Initialise(tweenService);
                 count++;
             }
 
@@ -90,34 +88,14 @@ namespace SWeetJelly.Samples.Tween
 
         private void ReplayPlayers()
         {
-            foreach (var behaviour in FindObjectsOfType<MonoBehaviour>())
+            foreach (var behaviour in FindObjectsByType<TweenPlayerBehaviour>(FindObjectsSortMode.None))
             {
-                if (!IsTweenPlayer(behaviour))
-                    continue;
-
-                behaviour.gameObject.SetActive(false);
-                behaviour.gameObject.SetActive(true);
+                if (behaviour.GetComponentsInParent<TweenPlayerBehaviour>().Length > 1) continue;
+                behaviour.Play();
             }
 
-            status = "TweenPlayer GameObjects were toggled to replay OnEnable tweens.";
+            status = "TweenPlayer playback started through its public Play API.";
         }
 
-        private static bool IsTweenPlayer(MonoBehaviour behaviour)
-        {
-            if (behaviour == null)
-                return false;
-
-            var type = behaviour.GetType();
-
-            while (type != null)
-            {
-                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(TweenPlayerBehaviour<,>))
-                    return true;
-
-                type = type.BaseType;
-            }
-
-            return false;
-        }
     }
 }

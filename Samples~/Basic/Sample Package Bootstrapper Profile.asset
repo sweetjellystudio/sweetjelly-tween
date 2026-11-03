@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 306cbd368405503418033d23d5ecfaee, type: 3}
   m_Name: Sample Package Bootstrapper Profile
   m_EditorClassIdentifier: 
-  modules:
+  packageBootstrappers:
   - {fileID: 11400000, guid: 86e89fd5c87e4db98a937908052ae2a6, type: 2}
