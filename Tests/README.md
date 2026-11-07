@@ -44,3 +44,8 @@ The original test descriptions follow. They describe baseline coverage and are n
   - `TweenBehaviour.Bind(...)`로 연결된 `TweenService`가 `Update()`에서 tick되어 tween을 완료하는지 검증한다.
 
 현재 테스트는 대표 tween case인 `FloatTweenCase`와 `TweenCases.DOFloat(...)`를 중심으로 실행 엔진을 검증한다. Transform, UI, Renderer 등 구체 extension은 대상 Unity component별 integration test가 필요할 때 추가한다.
+
+
+## Player async and UITK follow-up
+
+TweenPlayerAsyncTest covers execution replacement, token ownership, loop-wide completion, synchronous completion, Snap, exception/observer behavior, composition child replacement and custom opt-in. VisualElementTweenTest uses actual runtime UIDocument panels for interpolation, delay, style capture, detach, cancellation and validation. TweenPlayerAsyncLifetimeTest checks actual disable/destroy callbacks in PlayMode. Keep EditMode lifecycle assumptions separate from runtime evidence. Results and isolated consumer observations are recorded by the host, not asserted by this document.

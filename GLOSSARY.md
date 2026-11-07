@@ -8,5 +8,6 @@
 *   **Progress**: the normalized position along a playback's timeline.
 *   **Lane**: the set of playback scheduled for one update phase.
 *   **Player**: a reusable presentation command with direction, endpoint and lifecycle behavior.
+*   **Player run**: one invocation of a player's playback command, including its repetitions or child playback, ending in completion or cancellation.
 *   **Group**: child players played together as one presentation operation.
 *   **Sequence**: child players played in order as one presentation operation.

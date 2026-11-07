@@ -1,3 +1,5 @@
+> 2.1.0: [TweenPlayer 비동기 재생과 UITK opacity/scale 계약](Documentation~/async-and-uitk.md)을 추가했습니다. 실제 태그 게시·릴리즈·게임 이전은 별도 단계입니다.
+
 # SWeetJelly Tween
 
 ## 2.0 안내
@@ -8,7 +10,7 @@ Unity 6.3 LTS, Bootstrapper 2.0.0과 uGUI 2.0.0을 기준으로 한다. TMP 기�
 
 handle은 한 실행의 완료 또는 Kill을 관찰하며 ToTask는 정상 완료 시 성공, Kill/취소 시 canceled로 끝난다. 호출·설정·취소를 순차 수행하고 Unity 대상과 token 취소는 main thread에서 다룬다. callback 실패·종료 observer·등록 및 driver 소유권의 정확한 규칙은 아키텍처와 이전 안내에 있다.
 
-사용자가 작성한 [TweenPlayer 가이드](Documentation~/TweenPlayerDesignerGuide.ko.md)와 [Animator 가이드](Documentation~/AnimatorTweenPlayerDesignerGuide.ko.md)를 유지한다. 더 넓은 TweenPlayer 비동기 adapter 개선은 [후속 TODO](Documentation~/TODO.md)에만 기록했다.
+사용자가 작성한 [TweenPlayer 가이드](Documentation~/TweenPlayerDesignerGuide.ko.md)와 [Animator 가이드](Documentation~/AnimatorTweenPlayerDesignerGuide.ko.md)를 유지한다. 2.1.0의 TweenPlayer 비동기 재생은 [별도 계약](Documentation~/async-and-uitk.md)을 따르며, Inspector binding과 게임 이전 등 남은 범위는 [후속 TODO](Documentation~/TODO.md)에 기록했다.
 
 SWeetJelly Tween은 Unity object, UI, text, renderer, material, transform 등을 시간에 따라 보간하기 위한 tween module입니다.
 

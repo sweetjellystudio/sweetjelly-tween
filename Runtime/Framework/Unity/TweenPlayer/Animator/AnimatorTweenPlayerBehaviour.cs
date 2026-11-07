@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -50,6 +51,18 @@ namespace SWeetJelly.Tween.Framework.Unity
         private bool suppressKilledEvent;
 
         public override bool IsPlaying => isPlaying;
+        protected override bool SupportsAsyncPlayback => true;
+
+        protected override void ValidateAsyncPlayback(bool? forward)
+        {
+            base.ValidateAsyncPlayback(forward);
+            bool direction = forward ?? (playOnEnableDirection == PlaybackDirection.Forward);
+            var animator = TargetAnimator;
+            string trigger = direction ? forwardTrigger : backwardTrigger;
+            string state = direction ? forwardState : backwardState;
+            if (!CanPlay(animator, trigger, state) || ResolveStateName(animator, state) == null)
+                throw new InvalidOperationException("Animator playback configuration is invalid.");
+        }
 
         private Animator TargetAnimator
         {
@@ -192,13 +205,13 @@ namespace SWeetJelly.Tween.Framework.Unity
             if (!isPlaying)
                 return;
 
+            var run = CurrentPlayback;
             ClearPlayback();
 
             if (suppressKilledEvent)
                 return;
 
-            NotifyKilled();
-            killed?.Invoke();
+            NotifyAllTerminals(() => CancelPlayback(run), NotifyKilled, () => killed?.Invoke());
         }
 
         public override void SetPlayOnEnable(bool value)
@@ -227,21 +240,26 @@ namespace SWeetJelly.Tween.Framework.Unity
             }
 
             KillSilently();
+            if (CurrentPlayback != null) return;
+            var run = BeginPlayback();
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(oppositeTrigger))
+                    animator.ResetTrigger(oppositeTrigger);
 
-            if (!string.IsNullOrWhiteSpace(oppositeTrigger))
-                animator.ResetTrigger(oppositeTrigger);
+                activeAnimator = animator;
+                activeState = resolvedState;
+                stateEntryStartedAt = Time.unscaledTime;
+                enteredActiveState = false;
+                loopWarningLogged = false;
+                isPlaying = true;
 
-            activeAnimator = animator;
-            activeState = resolvedState;
-            stateEntryStartedAt = Time.unscaledTime;
-            enteredActiveState = false;
-            loopWarningLogged = false;
-            isPlaying = true;
+                animator.SetTrigger(trigger);
 
-            animator.SetTrigger(trigger);
-
-            NotifyPlayed();
-            played?.Invoke();
+                NotifyPlayed();
+                if (IsCurrentPlayback(run)) played?.Invoke();
+            }
+            catch { if (IsCurrentPlayback(run)) { try { Kill(); } catch { } } throw; }
         }
 
         private bool CanPlay(Animator animator, string trigger, string stateName)
@@ -325,6 +343,7 @@ namespace SWeetJelly.Tween.Framework.Unity
             }
 
             KillSilently();
+            if (CurrentPlayback != null) return;
             animator.Play(resolvedState, layer, 1f);
             animator.Update(0f);
         }
@@ -343,9 +362,9 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         private void CompletePlayback()
         {
+            var run = CurrentPlayback;
             ClearPlayback();
-            NotifyCompleted();
-            completed?.Invoke();
+            NotifyAllTerminals(() => CompletePlayback(run), NotifyCompleted, () => completed?.Invoke());
         }
 
         private void KillSilently()
@@ -353,9 +372,14 @@ namespace SWeetJelly.Tween.Framework.Unity
             if (!isPlaying)
                 return;
 
+            var run = CurrentPlayback;
             suppressKilledEvent = true;
-            Kill();
-            suppressKilledEvent = false;
+            try { Kill(); }
+            finally
+            {
+                suppressKilledEvent = false;
+                CancelPlayback(run);
+            }
         }
 
         private void ClearPlayback()

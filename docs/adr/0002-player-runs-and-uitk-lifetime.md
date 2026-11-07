@@ -1,0 +1,11 @@
+# Player run identity and UITK target lifetime
+
+Status: accepted, 2026-11-07, Q1–Q9 confirmed by the user. This follows ADR 0001; it does not retroactively change the scope of the 2.0 transition.
+
+TweenPlayer async calls observe one identified command, not the reusable player's event stream. Played can occur per loop and some Snap commands intentionally have different legacy event behavior. A pure event-to-Task extension cannot safely distinguish replacements or give old tokens execution ownership. Framework.Unity therefore owns an opaque per-command token, shared by player async awaiting and composition. Public consumption stays Task PlayAsync(ct)/PlayAsync(bool forward, ct); no public operation handle or detailed result enum is added. Existing subclasses keep compiling and opt in through protected hooks instead of new abstract members.
+
+Replacement, Kill, lifecycle termination and Snap cancel the previous await. Snap retains its synchronous event/pose semantics; pretending it normally completed the interrupted command was rejected. Child ownership is by run identity, so external child replacement cancels its waiting parent without transferring the parent's cancellation to the new child. Start failures propagate synchronously; runtime failures retain the existing Tick exception and canceled-wait contract. All Unity calls and cancellation stay on the main thread.
+
+UITK support uses existing case scheduling and handle awaiting, independent of player async. Opacity and Vector3 scale live in Framework.Unity with the built-in UIElements module. Starting values are captured at construction, with concrete inline values before resolved style. A detached element cannot start, and detach/panel transfer cancels the old run without automatic rebind or revival. Automatic UIDocument lookup and USS restoration would hide consumer ownership and are deferred together with Inspector authoring. Runtime writes do not alter UI Builder authoring assets; origin and conflicting property writers remain consumer responsibilities.
+
+See Documentation~/async-and-uitk.md for the supported contract and custom subclass obligations. Game view/page and Logo sequencing, publication and game dependency upgrades remain separate tasks.

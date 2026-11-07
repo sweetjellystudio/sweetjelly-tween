@@ -9,7 +9,7 @@ using UnityEngine.Serialization;
 
 namespace SWeetJelly.Tween.Framework.Unity
 {
-    public abstract class TweenPlayerBehaviour : MonoBehaviour
+    public abstract partial class TweenPlayerBehaviour : MonoBehaviour
     {
         public event Action Played;
         public event Action Completed;
@@ -49,6 +49,15 @@ namespace SWeetJelly.Tween.Framework.Unity
         protected void NotifyKilled()
         {
             NotifyTerminal(Killed);
+        }
+
+        internal static void NotifyAllTerminals(params Action[] notifications)
+        {
+            ExceptionDispatchInfo failure = null;
+            foreach (var notification in notifications)
+                try { notification(); }
+                catch (Exception error) { if (failure == null) failure = ExceptionDispatchInfo.Capture(error); }
+            failure?.Throw();
         }
 
         private static void NotifyTerminal(Action callbacks)
@@ -105,6 +114,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         private bool isInjected;
         private bool pendingPlay;
+        private PlaybackRun pendingStartRun;
         private PlaybackDirection pendingPlayDirection;
         private bool missingServiceWarningLogged;
         private bool suppressKilledEvent;
@@ -119,6 +129,14 @@ namespace SWeetJelly.Tween.Framework.Unity
         protected T endValue;
 
         public override bool IsPlaying => activeHandle != null && activeHandle.IsActive;
+        protected override bool SupportsAsyncPlayback => true;
+
+        protected override void ValidateAsyncPlayback(bool? forward)
+        {
+            base.ValidateAsyncPlayback(forward);
+            if (!isInjected || TargetComponent == null)
+                throw new InvalidOperationException("A target and injected tween service are required.");
+        }
 
         protected C TargetComponent
         {
@@ -146,7 +164,9 @@ namespace SWeetJelly.Tween.Framework.Unity
             {
                 PlaybackDirection direction = pendingPlayDirection;
                 pendingPlay = false;
-                Play(direction == PlaybackDirection.Forward);
+                pendingStartRun = CurrentPlayback;
+                try { Play(direction == PlaybackDirection.Forward); }
+                finally { pendingStartRun = null; }
             }
         }
 
@@ -184,7 +204,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         {
             pendingPlay = false;
             Kill();
-            ClearCapturedOrigin();
+            if (CurrentPlayback == null) ClearCapturedOrigin();
         }
 
         public override void Play()
@@ -261,6 +281,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         public override void SnapForward()
         {
             KillSilently();
+            if (CurrentPlayback != null) return;
 
             if (endpointMode == EndpointMode.CaptureOnForward && !hasCapturedOrigin)
             {
@@ -274,6 +295,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         public override void SnapBackward()
         {
             KillSilently();
+            if (CurrentPlayback != null) return;
 
             if (endpointMode == EndpointMode.ConfiguredEndpoints)
             {
@@ -292,11 +314,10 @@ namespace SWeetJelly.Tween.Framework.Unity
         {
             pendingPlay = false;
             var handle = activeHandle;
-            if (handle == null)
-                return;
-
+            var run = CurrentPlayback;
             activeHandle = null;
-            handle.Kill();
+            try { handle?.Kill(); }
+            finally { CancelPlayback(run); }
         }
 
         public override void SetPlayOnEnable(bool playOnEnable)
@@ -323,19 +344,27 @@ namespace SWeetJelly.Tween.Framework.Unity
             bool forceConfiguredStart,
             bool releaseOriginOnComplete)
         {
-            KillSilently();
+            var run = StartCommandRun();
+            if (run == null) return;
+            try
+            {
+                startValue = forceConfiguredStart
+                    ? configuredStart
+                    : CurrentValue;
+                endValue = destination;
+                loopIndex = 0;
+                releaseCapturedOriginOnComplete = releaseOriginOnComplete;
 
-            startValue = forceConfiguredStart
-                ? configuredStart
-                : CurrentValue;
-            endValue = destination;
-            loopIndex = 0;
-            releaseCapturedOriginOnComplete = releaseOriginOnComplete;
+                if (forceConfiguredStart)
+                    CurrentValue = startValue;
 
-            if (forceConfiguredStart)
-                CurrentValue = startValue;
-
-            PlayLoop(delay);
+                PlayLoop(delay);
+            }
+            catch
+            {
+                if (IsCurrentPlayback(run)) { try { Kill(); } catch { } }
+                throw;
+            }
         }
 
         protected virtual void PlayLoop(float loopDelay)
@@ -346,8 +375,8 @@ namespace SWeetJelly.Tween.Framework.Unity
                 return;
             }
 
-            KillSilently();
-
+            var run = CurrentPlayback;
+            if (!IsCurrentPlayback(run)) return;
             loopIndex++;
 
             TweenCase tweenCase = CreateTweenCase(endValue)
@@ -363,14 +392,27 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             if (ShouldContinueLoop())
             {
-                handle.Completed += OnLoopCompleted;
+                handle.Completed += () =>
+                {
+                    if (IsCurrentPlayback(run) && ReferenceEquals(activeHandle, handle))
+                    {
+                        try { OnLoopCompleted(); }
+                        catch { if (IsCurrentPlayback(run)) { try { Kill(); } catch { } } throw; }
+                    }
+                };
             }
             else
             {
-                handle.Completed += OnCompleted;
+                handle.Completed += () =>
+                {
+                    if (IsCurrentPlayback(run) && ReferenceEquals(activeHandle, handle)) OnCompleted();
+                };
             }
 
-            handle.Killed += OnKilled;
+            handle.Killed += () =>
+            {
+                if (IsCurrentPlayback(run) && (activeHandle == null || ReferenceEquals(activeHandle, handle))) OnKilled();
+            };
             try
             {
                 NotifyPlayed();
@@ -393,6 +435,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         protected virtual void OnLoopCompleted()
         {
+            var run = CurrentPlayback;
             activeHandle = null;
 
             switch (loopType)
@@ -412,7 +455,7 @@ namespace SWeetJelly.Tween.Framework.Unity
                     break;
             }
 
-            PlayLoop(0f);
+            if (IsCurrentPlayback(run)) PlayLoop(0f);
         }
 
         protected virtual void OnCompleted()
@@ -423,8 +466,8 @@ namespace SWeetJelly.Tween.Framework.Unity
                 ClearCapturedOrigin();
 
             releaseCapturedOriginOnComplete = false;
-            NotifyCompleted();
-            completed?.Invoke();
+            var run = CurrentPlayback;
+            NotifyAllTerminals(() => CompletePlayback(run), NotifyCompleted, () => completed?.Invoke());
         }
 
         protected virtual void OnKilled()
@@ -435,35 +478,56 @@ namespace SWeetJelly.Tween.Framework.Unity
             if (suppressKilledEvent)
                 return;
 
-            NotifyKilled();
-            killed?.Invoke();
+            var run = CurrentPlayback;
+            NotifyAllTerminals(() => CancelPlayback(run), NotifyKilled, () => killed?.Invoke());
         }
 
         private void KillSilently()
         {
-            if (activeHandle == null)
-                return;
-
+            var run = CurrentPlayback;
             suppressKilledEvent = true;
             var handle = activeHandle;
             activeHandle = null;
-            try { handle.Kill(); }
-            finally { suppressKilledEvent = false; }
+            try { handle?.Kill(); }
+            finally
+            {
+                suppressKilledEvent = false;
+                CancelPlayback(run);
+            }
         }
 
         private void CompleteWithoutPlayback()
         {
-            KillSilently();
-            NotifyPlayed();
-            played?.Invoke();
-            NotifyCompleted();
-            completed?.Invoke();
+            var run = StartCommandRun();
+            if (run == null) return;
+            try
+            {
+                NotifyPlayed();
+                if (!IsCurrentPlayback(run)) return;
+                played?.Invoke();
+                if (!IsCurrentPlayback(run)) return;
+                NotifyAllTerminals(() => CompletePlayback(run), NotifyCompleted, () => completed?.Invoke());
+            }
+            catch { if (IsCurrentPlayback(run)) { try { Kill(); } catch { } } throw; }
         }
 
         private void QueuePendingPlay(PlaybackDirection direction)
         {
+            KillSilently();
+            if (CurrentPlayback != null) return;
             pendingPlay = true;
             pendingPlayDirection = direction;
+            BeginPlayback();
+        }
+
+        private PlaybackRun StartCommandRun()
+        {
+            var pending = pendingStartRun;
+            pendingStartRun = null;
+            if (IsCurrentPlayback(pending)) return pending;
+            KillSilently();
+            if (CurrentPlayback != null) return null;
+            return BeginPlayback();
         }
 
         private void ClearCapturedOrigin()
