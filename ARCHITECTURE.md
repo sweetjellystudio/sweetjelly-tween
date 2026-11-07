@@ -28,7 +28,9 @@ The Bootstrapper asset is reusable configuration, not an independent global runt
 
 Players own their active handles and child subscriptions. Generic property players retain capture-on-forward/configured endpoints, direction, Snap and loop behavior. Group/Sequence track their own child playback, cancel on child Kill, and ignore stale callbacks from replaced playback. They clean up subscriptions and only stop work they started. Animator players use controller triggers/states; they are not property interpolation or reverse-time clip playback.
 
-The game owns page/view sequencing and game-specific animation policy. Its repeated player-event-to-Task adapters motivate a [deferred package follow-up][todo]; no new TweenPlayer asynchronous API is part of this transition.
+Framework.Unity additionally owns per-command player run tokens, Task entry points and run-aware composition. The pure scheduling/handle model is reused. Existing subclasses opt in through protected hooks; legacy player events are not execution identifiers. VisualElement opacity/scale cases own detach subscriptions only while active and reuse the normal service/handle path. The UIElements built-in module is declared explicitly. See [the follow-up decision](docs/adr/0002-player-runs-and-uitk-lifetime.md) and [the supported contract](Documentation~/async-and-uitk.md).
+
+The game owns page/view sequencing and game-specific animation policy. Inspector element binding, additional UITK properties and consumer migration remain [follow-up work][todo].
 
 [adr]: docs/adr/0001-playback-rules-and-owned-lifetime.md
 [todo]: Documentation~/TODO.md

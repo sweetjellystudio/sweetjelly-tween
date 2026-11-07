@@ -24,6 +24,8 @@ namespace SWeetJelly.Tween.Framework.Unity
         private TweenPlayerBehaviour currentPlayer;
         private Action currentCompleted;
         private Action currentKilled;
+        private PlaybackRun currentChildRun;
+        private Action<bool> currentChildSettled;
         private int generation;
         private PlaybackMode playbackMode;
         private int currentIndex;
@@ -34,6 +36,23 @@ namespace SWeetJelly.Tween.Framework.Unity
         private bool starting;
 
         public override bool IsPlaying => isSequencePlaying;
+        protected override bool SupportsAsyncPlayback => true;
+        private bool validatingPlayback;
+
+        protected override void ValidateAsyncPlayback(bool? forward)
+        {
+            base.ValidateAsyncPlayback(forward);
+            if (validatingPlayback) throw new InvalidOperationException("TweenPlayer composition contains a cycle.");
+            validatingPlayback = true;
+            try
+            {
+                if (players == null) return;
+                foreach (var player in players)
+                    if (player != null && player != this && player.isActiveAndEnabled)
+                        player.CheckAsyncPlayback(forward);
+            }
+            finally { validatingPlayback = false; }
+        }
 
         private void OnEnable()
         {
@@ -44,8 +63,6 @@ namespace SWeetJelly.Tween.Framework.Unity
         private void OnDisable()
         {
             Kill();
-            ClearCurrentPlayer();
-            isSequencePlaying = false;
         }
 
         public override void Play()
@@ -81,7 +98,10 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public override void SnapForward()
         {
+            int expected = generation + 1;
             StopCurrentSilently();
+            if (generation != expected) return;
+            int snapGeneration = generation;
 
             if (players != null)
             {
@@ -90,17 +110,23 @@ namespace SWeetJelly.Tween.Framework.Unity
                     TweenPlayerBehaviour player = players[i];
 
                     if (player != null && player != this)
+                    {
                         player.SnapForward();
+                        if (generation != snapGeneration) return;
+                    }
                 }
             }
 
             InvokePlayed();
-            InvokeCompleted();
+            if (generation == snapGeneration) InvokeCompleted();
         }
 
         public override void SnapBackward()
         {
+            int expected = generation + 1;
             StopCurrentSilently();
+            if (generation != expected) return;
+            int snapGeneration = generation;
 
             if (players != null)
             {
@@ -109,12 +135,15 @@ namespace SWeetJelly.Tween.Framework.Unity
                     TweenPlayerBehaviour player = players[i];
 
                     if (player != null && player != this)
+                    {
                         player.SnapBackward();
+                        if (generation != snapGeneration) return;
+                    }
                 }
             }
 
             InvokePlayed();
-            InvokeCompleted();
+            if (generation == snapGeneration) InvokeCompleted();
         }
 
         public override void Kill()
@@ -122,13 +151,21 @@ namespace SWeetJelly.Tween.Framework.Unity
             if (!isSequencePlaying)
                 return;
 
+            var operation = CurrentPlayback;
+            var childRun = currentChildRun;
             TweenPlayerBehaviour player = currentPlayer;
 
             ClearCurrentPlayer();
             isSequencePlaying = false;
             generation++;
             System.Runtime.ExceptionServices.ExceptionDispatchInfo failure = null;
-            try { if (player != null) player.Kill(); }
+            try { CancelPlayback(operation); }
+            catch (Exception error) { if (failure == null) failure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+            try
+            {
+                if (childRun != null) childRun.Kill();
+                else if (player != null) player.Kill();
+            }
             catch (Exception error) { failure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
             try { InvokeKilled(); }
             catch (Exception error) { if (failure == null) failure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
@@ -173,6 +210,7 @@ namespace SWeetJelly.Tween.Framework.Unity
             isSequencePlaying = true;
             killedEventInvoked = false;
             int run = ++generation;
+            BeginPlayback();
 
             starting = true;
             try
@@ -234,17 +272,36 @@ namespace SWeetJelly.Tween.Framework.Unity
             {
                 if (run == generation && ReferenceEquals(currentPlayer, player)) OnCurrentPlayerKilled();
             };
-            currentPlayer.Completed += currentCompleted;
-            currentPlayer.Killed += currentKilled;
+            if (!player.TracksPlayback)
+            {
+                currentPlayer.Completed += currentCompleted;
+                currentPlayer.Killed += currentKilled;
+            }
 
             try
             {
-                switch (playbackMode)
+                void StartChild()
                 {
-                    case PlaybackMode.Default: player.Play(); break;
-                    case PlaybackMode.Forward: player.PlayForward(); break;
-                    case PlaybackMode.Backward: player.PlayBackward(); break;
+                    switch (playbackMode)
+                    {
+                        case PlaybackMode.Default: player.Play(); break;
+                        case PlaybackMode.Forward: player.PlayForward(); break;
+                        case PlaybackMode.Backward: player.PlayBackward(); break;
+                    }
                 }
+                if (player.TracksPlayback)
+                    player.ObservePlayback(StartChild, operation =>
+                    {
+                        currentChildRun = operation;
+                        currentChildSettled = completed =>
+                        {
+                            if (run != generation || !ReferenceEquals(currentChildRun, operation)) return;
+                            if (completed) OnCurrentPlayerCompleted();
+                            else OnCurrentPlayerKilled();
+                        };
+                        operation.Settled += currentChildSettled;
+                    });
+                else StartChild();
             }
             catch
             {
@@ -265,23 +322,37 @@ namespace SWeetJelly.Tween.Framework.Unity
         {
             ClearCurrentPlayer();
             isSequencePlaying = false;
-            InvokeKilled();
+            generation++;
+            var operation = CurrentPlayback;
+            NotifyAllTerminals(() => CancelPlayback(operation), InvokeKilled);
         }
 
         private void StopCurrentSilently()
         {
             generation++;
+            var operation = CurrentPlayback;
+            var childRun = currentChildRun;
             TweenPlayerBehaviour player = currentPlayer;
 
             ClearCurrentPlayer();
             isSequencePlaying = false;
-
-            if (player != null)
-                player.Kill();
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo failure = null;
+            try { CancelPlayback(operation); }
+            catch (Exception error) { failure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+            try
+            {
+                if (childRun != null) childRun.Kill();
+                else if (player != null) player.Kill();
+            }
+            catch (Exception error) { if (failure == null) failure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+            failure?.Throw();
         }
 
         private void ClearCurrentPlayer()
         {
+            if (currentChildRun != null) currentChildRun.Settled -= currentChildSettled;
+            currentChildRun = null;
+            currentChildSettled = null;
             if (currentPlayer != null)
             {
                 currentPlayer.Completed -= currentCompleted;
@@ -302,8 +373,8 @@ namespace SWeetJelly.Tween.Framework.Unity
         {
             ClearCurrentPlayer();
             isSequencePlaying = false;
-            NotifyCompleted();
-            completed?.Invoke();
+            var operation = CurrentPlayback;
+            NotifyAllTerminals(() => CompletePlayback(operation), NotifyCompleted, () => completed?.Invoke());
         }
 
         private void InvokeKilled()

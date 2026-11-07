@@ -8,7 +8,7 @@ Use the installed unity-package coordinator. Read [architecture][architecture], 
 *   Snapshot control-operation membership; new playback from callbacks waits for a later Tick. Protect bootstrap registrations and driver bindings by identity, cancel owned work, and preserve borrowed objects.
 *   A handle observes one execution. Keep terminal notifications, Task settlement and event/token cleanup consistent. Guard player composition against stale child callbacks and duplicate terminal outcomes.
 *   Run package EditMode/PlayMode tests, actual sample/Inspector/Animator checks, isolated declared-dependency consumption, and the selected ordinary Player backends on Unity 6.3. Store environment-specific evidence in the development host.
-*   Preserve existing designer guides. [Deferred work][todo] records the broader TweenPlayer await adapter; this transition does not authorize implementing it or migrating a game.
+*   For player async hooks, replacement/Snap settlement or VisualElement target changes, read [the run and UITK contract](Documentation~/async-and-uitk.md) and [ADR 0002](docs/adr/0002-player-runs-and-uitk-lifetime.md). Preserve existing designer guides. [Deferred work][todo] tracks remaining authoring/consumer scope.
 
 [architecture]: ARCHITECTURE.md
 [adr]: docs/adr/0001-playback-rules-and-owned-lifetime.md

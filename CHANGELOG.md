@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2.1.0
+
+* [Added] Await one TweenPlayer command with PlayAsync(ct)/PlayAsync(bool forward, ct), including finite loops, Group, Sequence and Animator observation. Existing custom subclasses opt in through protected run hooks.
+* [Fixed] Bind replacement, Snap, token and composite child cancellation to the owned execution; old waiters cannot affect a replacement.
+* [Added] VisualElement opacity/Vector3 scale cases and DOFade/DOScale extensions, with detach cancellation and a built-in UIElements dependency.
+* [Added] Async/UITK contract, accepted decision, consumer sample and execution/lifetime regression tests.
+
 ## 2.0.0
 
 * [Changed] Require Unity 6.3 LTS, Bootstrapper 2.0.0 and uGUI 2.0.0; declare the runtime Audio/Animation modules and remove unused Utils/standalone TMP dependencies.

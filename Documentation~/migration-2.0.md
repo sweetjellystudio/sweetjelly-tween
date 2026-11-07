@@ -20,3 +20,8 @@ Serialize calls and cancellation in the same execution context. For Unity target
 The proposed broader TweenPlayer await adapter and consumer simplification are [deferred][todo]. Current handle correctness fixes are included here. Git publication and actual public-tag installation verification are separate tasks.
 
 [todo]: TODO.md
+
+
+## Migrating from 2.0 to 2.1
+
+Version 2.1.0 includes the separately approved player async and UITK contracts. No serialized fields or GUIDs are migrated. Existing synchronous custom subclasses remain supported; safe async consumption requires explicit protected run hooks. See [async and UITK](async-and-uitk.md) and CHANGELOG 2.1.0. The earlier deferral above describes the historical 2.0 transition, not the current working tree. The package version is 2.1.0; actual tag publication and game dependency updates remain separate steps.

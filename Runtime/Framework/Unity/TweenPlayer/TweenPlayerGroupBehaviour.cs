@@ -25,6 +25,23 @@ namespace SWeetJelly.Tween.Framework.Unity
         private bool initialising;
 
         public override bool IsPlaying => isPlaying;
+        protected override bool SupportsAsyncPlayback => true;
+        private bool validatingPlayback;
+
+        protected override void ValidateAsyncPlayback(bool? forward)
+        {
+            base.ValidateAsyncPlayback(forward);
+            if (validatingPlayback) throw new InvalidOperationException("TweenPlayer composition contains a cycle.");
+            validatingPlayback = true;
+            try
+            {
+                if (players == null) return;
+                foreach (var player in players)
+                    if (player != null && player != this && player.isActiveAndEnabled)
+                        player.CheckAsyncPlayback(forward);
+            }
+            finally { validatingPlayback = false; }
+        }
 
         private void OnEnable() { if (playOnEnable) Play(); }
         private void OnDisable() => Kill();
@@ -71,14 +88,18 @@ namespace SWeetJelly.Tween.Framework.Unity
             int run = ++generation;
             completedCount = 0;
             isPlaying = true;
+            BeginPlayback();
             foreach (var player in Members(true))
             {
                 var child = new ChildRun { Player = player };
                 child.Completed = () => OnChildFinished(child, run, false);
                 child.Killed = () => OnChildFinished(child, run, true);
                 children.Add(child);
-                player.Completed += child.Completed;
-                player.Killed += child.Killed;
+                if (!player.TracksPlayback)
+                {
+                    player.Completed += child.Completed;
+                    player.Killed += child.Killed;
+                }
             }
             var snapshot = children.ToArray();
             starting = true;
@@ -93,7 +114,14 @@ namespace SWeetJelly.Tween.Framework.Unity
                     if (run != generation || !isPlaying) return;
                     if (child.Player == null || !child.Player.isActiveAndEnabled) { Finish(true); return; }
                     child.Started = true;
-                    action(child.Player);
+                    if (child.Player.TracksPlayback)
+                        child.Player.ObservePlayback(() => action(child.Player), operation =>
+                        {
+                            child.Operation = operation;
+                            child.Settled = completed => OnChildFinished(child, run, !completed);
+                            operation.Settled += child.Settled;
+                        });
+                    else action(child.Player);
                 }
             }
             catch
@@ -116,6 +144,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         private void Finish(bool wasKilled, bool notify = true)
         {
             if (!isPlaying) return;
+            var operation = CurrentPlayback;
             var snapshot = children.ToArray();
             children.Clear();
             isPlaying = false;
@@ -123,14 +152,24 @@ namespace SWeetJelly.Tween.Framework.Unity
             ExceptionDispatchInfo failure = null;
             foreach (var child in snapshot)
             {
+                if (child.Operation != null) child.Operation.Settled -= child.Settled;
                 if (child.Player == null) continue;
                 TryCleanup(() => child.Player.Completed -= child.Completed, ref failure);
                 TryCleanup(() => child.Player.Killed -= child.Killed, ref failure);
             }
+            TryCleanup(() =>
+            {
+                if (wasKilled) CancelPlayback(operation);
+                else CompletePlayback(operation);
+            }, ref failure);
             if (wasKilled)
                 foreach (var child in snapshot)
                     if (child.Started && !child.Finished && child.Player != null)
-                        TryCleanup(() => child.Player.Kill(), ref failure);
+                        TryCleanup(() =>
+                        {
+                            if (child.Operation != null) child.Operation.Kill();
+                            else child.Player.Kill();
+                        }, ref failure);
 
             if (notify)
             {
@@ -153,6 +192,7 @@ namespace SWeetJelly.Tween.Framework.Unity
             if (!StopForReplacement()) return;
             int run = ++generation;
             isPlaying = true;
+            BeginPlayback();
             try
             {
                 NotifyPlayed();
@@ -182,6 +222,8 @@ namespace SWeetJelly.Tween.Framework.Unity
             public TweenPlayerBehaviour Player;
             public Action Completed;
             public Action Killed;
+            public PlaybackRun Operation;
+            public Action<bool> Settled;
             public bool Started;
             public bool Finished;
         }

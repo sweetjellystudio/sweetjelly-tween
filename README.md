@@ -9,13 +9,13 @@ After publishing the version tag, add the custom Git dependencies to the consumi
 ```json
 {
   "dependencies": {
-    "com.sweetjelly.tween": "https://github.com/sweetjellystudio/sweetjelly-tween.git#v2.0.0",
+    "com.sweetjelly.tween": "https://github.com/sweetjellystudio/sweetjelly-tween.git#v2.1.0",
     "com.sweetjelly.bootstrapper": "https://github.com/sweetjellystudio/sweetjelly-bootstrapper.git#v2.0.0"
   }
 }
 ```
 
-The package declares Bootstrapper 2.0.0, uGUI 2.0.0 and the Audio/Animation built-in modules it uses. TMP APIs retain Unity.TextMeshPro references; no standalone TMP or Utils package is required. The example does not claim an unpublished tag is available. License: [MIT][license].
+The package declares Bootstrapper 2.0.0, uGUI 2.0.0 and the Audio/Animation/UIElements built-in modules it uses. TMP APIs retain Unity.TextMeshPro references; no standalone TMP or Utils package is required. The example does not claim an unpublished tag is available. License: [MIT][license].
 
 ##  Code consumption
 
@@ -62,7 +62,7 @@ The [TweenPlayer designer guide][designer] covers capture-on-forward/configured 
 
 Import Tween Sample through Package Manager. Open a scene under Default, UI or TweenPlayer. The UI sample uses TMP; import TMP Essential Resources in a fresh consumer if its default font/settings are absent. The sample profile uses current Bootstrapper fields. The sample owns its demonstration controls and generated visuals; core presentation players belong to this package.
 
-Tests and environment-specific verification are described in [Tests/README][tests]. See the [accepted decision][adr] and [glossary][glossary] when changing semantics. A broader TweenPlayer await surface is a [deferred follow-up][todo], not part of this version's public API. Publishing and public-tag installation verification are separate tasks.
+Tests and environment-specific verification are described in [Tests/README][tests]. See the [accepted decision][adr] and [glossary][glossary] when changing semantics. Version 2.1.0 adds [player async and VisualElement targets](Documentation~/async-and-uitk.md); see CHANGELOG 2.1.0 for scope. Remaining authoring/consumer work is tracked in [TODO][todo]. Publishing and public-tag installation verification are separate tasks.
 
 [license]: LICENSE.md
 [architecture]: ARCHITECTURE.md
