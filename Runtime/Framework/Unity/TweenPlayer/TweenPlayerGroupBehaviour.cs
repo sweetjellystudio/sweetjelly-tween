@@ -7,7 +7,7 @@ using UnityEngine.Events;
 
 namespace SWeetJelly.Tween.Framework.Unity
 {
-    public sealed class TweenPlayerGroupBehaviour : TweenPlayerBehaviour
+    public sealed partial class TweenPlayerGroupBehaviour : TweenPlayerBehaviour
     {
         [SerializeField] private bool playOnEnable;
         [SerializeField] private TweenPlayerBehaviour[] players;
@@ -24,7 +24,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         private bool starting;
         private bool initialising;
 
-        public override bool IsPlaying => isPlaying;
+        public override bool IsPlaying => HasManualControl || isPlaying;
         protected override bool SupportsAsyncPlayback => true;
         private bool validatingPlayback;
 
@@ -46,14 +46,14 @@ namespace SWeetJelly.Tween.Framework.Unity
         private void OnEnable() { if (playOnEnable) Play(); }
         private void OnDisable() => Kill();
 
-        public override void Play() => PlayEach(player => player.Play());
+        public override void Play() => PlayEach(player => player.Play(), null);
         public override void Play(bool forward) { if (forward) PlayForward(); else PlayBackward(); }
-        public override void PlayForward() => PlayEach(player => player.PlayForward());
-        public override void PlayBackward() => PlayEach(player => player.PlayBackward());
+        public override void PlayForward() => PlayEach(player => player.PlayForward(), true);
+        public override void PlayBackward() => PlayEach(player => player.PlayBackward(), false);
         public override void Snap(bool forward) { if (forward) SnapForward(); else SnapBackward(); }
         public override void SnapForward() => SnapEach(player => player.SnapForward());
         public override void SnapBackward() => SnapEach(player => player.SnapBackward());
-        public override void Kill() { if (isPlaying) Finish(true); }
+        public override void Kill() { if (StopManualControl()) return; if (isPlaying) Finish(true); }
         public override void SetPlayOnEnable(bool playOnEnable) => this.playOnEnable = playOnEnable;
 
         public override void Initialise(ITweenService tweenService)
@@ -75,12 +75,13 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         private bool StopForReplacement()
         {
+            if (StopManualControl() && CurrentPlayback != null) return false;
             int expected = generation + (isPlaying ? 1 : 0);
             if (isPlaying) Finish(true, false);
             return generation == expected;
         }
 
-        private void PlayEach(Action<TweenPlayerBehaviour> action)
+        private void PlayEach(Action<TweenPlayerBehaviour> action, bool? forward)
         {
             if (!isActiveAndEnabled) return;
             if (starting && isPlaying) throw new InvalidOperationException("TweenPlayer composition contains a playback cycle.");
@@ -89,6 +90,7 @@ namespace SWeetJelly.Tween.Framework.Unity
             completedCount = 0;
             isPlaying = true;
             BeginPlayback();
+            RecordTimeline(forward);
             foreach (var player in Members(true))
             {
                 var child = new ChildRun { Player = player };

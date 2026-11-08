@@ -25,6 +25,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         protected float currentDelay;
         public float CurrentDelay => currentDelay;
+        internal float ObservedElapsed { get; private set; }
 
         protected bool isPaused;
         public bool IsPaused => isPaused;
@@ -111,6 +112,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             state = 0f;
             currentDelay = 0f;
+            ObservedElapsed = 0f;
 
             isPaused = false;
             isCompleted = false;
@@ -264,6 +266,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         public void UpdateState(float deltaTime)
         {
             state = TweenTiming.Advance(state, duration, deltaTime);
+            ObservedElapsed += TweenTiming.Delta(deltaTime);
             if (state >= 1f) isCompleted = true;
             InvokeTimeReachedCallbacks();
         }
@@ -271,6 +274,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         public void UpdateDelay(float deltaTime)
         {
             currentDelay = TweenTiming.AdvanceDelay(currentDelay, delay, deltaTime);
+            ObservedElapsed += TweenTiming.Delta(deltaTime);
         }
 
         public TweenCase AddOnCompleted(Action onCompleted)

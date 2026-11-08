@@ -49,3 +49,7 @@ The original test descriptions follow. They describe baseline coverage and are n
 ## Player async and UITK follow-up
 
 TweenPlayerAsyncTest covers execution replacement, token ownership, loop-wide completion, synchronous completion, Snap, exception/observer behavior, composition child replacement and custom opt-in. VisualElementTweenTest uses actual runtime UIDocument panels for interpolation, delay, style capture, detach, cancellation and validation. TweenPlayerAsyncLifetimeTest checks actual disable/destroy callbacks in PlayMode. Keep EditMode lifecycle assumptions separate from runtime evidence. Results and isolated consumer observations are recorded by the host, not asserted by this document.
+
+## Prepared timeline control
+
+TweenPlayerTimelineTest covers pose-preserving live transfer, silent endpoint sampling, regrab/resume, captured endpoints/easing/delay, sequential same-property restoration, nested composition, finite loops and observed frame-boundary holds, capability rejection, stale controls/tokens and terminal observer replacement. TweenPlayerTimelineLifetimeTest checks actual frame progression, disable/destroy and released targets while the manual clock is parked. Run them with the ordinary package regressions; fresh NUnit XML, sample/Inspector observations and separate declared-dependency/Player results belong to the host evidence.

@@ -73,7 +73,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         }
     }
 
-    public abstract class TweenPlayerBehaviour<C, T> : TweenPlayerBehaviour
+    public abstract partial class TweenPlayerBehaviour<C, T> : TweenPlayerBehaviour
         where C : Component
     {
         [Header("Timing")]
@@ -111,6 +111,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         [SerializeField] private UnityEvent killed;
 
         private ITweenService tweenService;
+        private bool timelineForward;
 
         private bool isInjected;
         private bool pendingPlay;
@@ -128,7 +129,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         protected T startValue;
         protected T endValue;
 
-        public override bool IsPlaying => activeHandle != null && activeHandle.IsActive;
+        public override bool IsPlaying => HasManualControl || activeHandle != null && activeHandle.IsActive;
         protected override bool SupportsAsyncPlayback => true;
 
         protected override void ValidateAsyncPlayback(bool? forward)
@@ -237,6 +238,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             if (endpointMode == EndpointMode.ConfiguredEndpoints)
             {
+                timelineForward = true;
                 PlayDirection(backwardValue, forwardValue, forceConfiguredStart: true, releaseOriginOnComplete: false);
                 return;
             }
@@ -247,6 +249,7 @@ namespace SWeetJelly.Tween.Framework.Unity
                 hasCapturedOrigin = true;
             }
 
+            timelineForward = true;
             PlayDirection(capturedOrigin, forwardValue, forceConfiguredStart: false, releaseOriginOnComplete: false);
         }
 
@@ -257,6 +260,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             if (endpointMode == EndpointMode.ConfiguredEndpoints)
             {
+                timelineForward = false;
                 PlayDirection(forwardValue, backwardValue, forceConfiguredStart: true, releaseOriginOnComplete: false);
                 return;
             }
@@ -267,6 +271,7 @@ namespace SWeetJelly.Tween.Framework.Unity
                 return;
             }
 
+            timelineForward = false;
             PlayDirection(forwardValue, capturedOrigin, forceConfiguredStart: false, releaseOriginOnComplete: true);
         }
 
@@ -312,6 +317,8 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public override void Kill()
         {
+            if (StopManualControl()) return;
+            UnregisterTimelineWriter();
             pendingPlay = false;
             var handle = activeHandle;
             var run = CurrentPlayback;
@@ -353,6 +360,13 @@ namespace SWeetJelly.Tween.Framework.Unity
                     : CurrentValue;
                 endValue = destination;
                 loopIndex = 0;
+                timelineCase = null;
+                timelineCommandVersion++;
+                timelineInitialStart = startValue;
+                timelineInitialEnd = endValue;
+                timelineCycleSpans.Clear();
+                RecordTimeline(timelineForward);
+                RegisterTimelineWriter();
                 releaseCapturedOriginOnComplete = releaseOriginOnComplete;
 
                 if (forceConfiguredStart)
@@ -387,6 +401,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
             ApplyEasing(tweenCase);
 
+            timelineCase = tweenCase;
             ITweenHandle handle = tweenService.Play(tweenCase);
             activeHandle = handle;
 
@@ -437,6 +452,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         {
             var run = CurrentPlayback;
             activeHandle = null;
+            if (timelineCase != null) timelineCycleSpans.Add(timelineCase.ObservedElapsed);
 
             switch (loopType)
             {
@@ -460,6 +476,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         protected virtual void OnCompleted()
         {
+            UnregisterTimelineWriter();
             activeHandle = null;
 
             if (releaseCapturedOriginOnComplete)
@@ -472,6 +489,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         protected virtual void OnKilled()
         {
+            UnregisterTimelineWriter();
             activeHandle = null;
             releaseCapturedOriginOnComplete = false;
 
@@ -484,6 +502,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         private void KillSilently()
         {
+            if (StopTimelineWriter() && CurrentPlayback != null) return;
             var run = CurrentPlayback;
             suppressKilledEvent = true;
             var handle = activeHandle;

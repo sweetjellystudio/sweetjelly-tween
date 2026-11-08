@@ -9,7 +9,7 @@ After publishing the version tag, add the custom Git dependencies to the consumi
 ```json
 {
   "dependencies": {
-    "com.sweetjelly.tween": "https://github.com/sweetjellystudio/sweetjelly-tween.git#v2.1.0",
+    "com.sweetjelly.tween": "https://github.com/sweetjellystudio/sweetjelly-tween.git#v2.2.0",
     "com.sweetjelly.bootstrapper": "https://github.com/sweetjellystudio/sweetjelly-bootstrapper.git#v2.0.0"
   }
 }
@@ -57,6 +57,8 @@ TweenCase keeps its existing fluent/protected consumption surface. Unity adapter
 Serialize service/configuration/cancellation calls; Unity targets and token cancellation use the main thread. Execution exceptions propagate after required cleanup; there is no automatic worker queue. An active playable cannot be scheduled twice, and same-lane Tick reentry is rejected. Newly scheduled callback work waits for a later Tick.
 
 ##  Designer workflows and samples
+
+Version 2.2.0 adds [prepared timelines and exclusive control](Documentation~/timeline-control.md) for silent time sampling and continuous takeover of supported serialized value/Sequence/Group players. Existing Snap and ordinary playback keep their event behavior. The guide includes capability, await/cancellation, restoration and migration rules; Samples~/Basic/Timeline demonstrates public consumption. Publishing the version tag remains a separate action.
 
 The [TweenPlayer designer guide][designer] covers capture-on-forward/configured endpoints, direction, Snap, looping, injection and composition. The [Animator guide][animator] covers trigger/state authoring; forward/backward commands do not mean reverse-time clip playback.
 

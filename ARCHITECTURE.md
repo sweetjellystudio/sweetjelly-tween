@@ -32,5 +32,11 @@ Framework.Unity additionally owns per-command player run tokens, Task entry poin
 
 The game owns page/view sequencing and game-specific animation policy. Inspector element binding, additional UITK properties and consumer migration remain [follow-up work][todo].
 
+##  Prepared timelines
+
+Framework.Unity records supported value-player trajectories without changing legacy scheduling. TweenPlayerTimeline owns reusable captured values and Sequence/Group placement; TweenPlayerControl owns one replacement execution and reserves its members/property writers. Explicit sampling evaluates saved values without invoking children or callbacks. Automatic control uses a private TweenCase through the existing App scheduler. Domain owns finite timeline/loop calculations and accepts observed spans as data; it does not know Unity targets or frames.
+
+Live transfer preserves observed frame-boundary holds and current endpoints, cancels the old run and detaches its token ownership. Sequence can calculate successive writes to one property; parallel conflicts and mixed clocks/lanes/services are rejected before acquisition. Only three concrete consumer value players opt in initially; custom subclasses retain their existing abstract surface. See [the timeline contract](Documentation~/timeline-control.md) and [the accepted decision](docs/adr/0003-prepared-timelines-and-control-transfer.md) for capability, restoration and terminal semantics.
+
 [adr]: docs/adr/0001-playback-rules-and-owned-lifetime.md
 [todo]: Documentation~/TODO.md

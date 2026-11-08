@@ -83,6 +83,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         protected virtual void OnDestroy()
         {
+            StopManualControl();
             var run = currentPlayback;
             if (run != null) run.Kill();
         }
