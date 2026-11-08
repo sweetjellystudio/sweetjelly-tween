@@ -11,3 +11,5 @@
 *   **Player run**: one invocation of a player's playback command, including its repetitions or child playback, ending in completion or cancellation.
 *   **Group**: child players played together as one presentation operation.
 *   **Sequence**: child players played in order as one presentation operation.
+*   **Prepared timeline**: a captured presentation trajectory that gives the same pose when revisiting the same time.
+*   **Control**: exclusive ownership of one execution of a prepared timeline, with either an automatic clock or direct time sampling.

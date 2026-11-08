@@ -7,7 +7,7 @@ using UnityEngine.Serialization;
 
 namespace SWeetJelly.Tween.Framework.Unity
 {
-    public sealed class TweenPlayerSequenceBehaviour : TweenPlayerBehaviour
+    public sealed partial class TweenPlayerSequenceBehaviour : TweenPlayerBehaviour
     {
         [SerializeField] private bool playOnEnable;
         [FormerlySerializedAs("reverseWhenPlayingToInitial")]
@@ -35,7 +35,7 @@ namespace SWeetJelly.Tween.Framework.Unity
         private bool initialising;
         private bool starting;
 
-        public override bool IsPlaying => isSequencePlaying;
+        public override bool IsPlaying => HasManualControl || isSequencePlaying;
         protected override bool SupportsAsyncPlayback => true;
         private bool validatingPlayback;
 
@@ -148,6 +148,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         public override void Kill()
         {
+            if (StopManualControl()) return;
             if (!isSequencePlaying)
                 return;
 
@@ -211,6 +212,7 @@ namespace SWeetJelly.Tween.Framework.Unity
             killedEventInvoked = false;
             int run = ++generation;
             BeginPlayback();
+            RecordTimeline(mode == PlaybackMode.Default ? null : mode == PlaybackMode.Forward);
 
             starting = true;
             try
@@ -329,6 +331,7 @@ namespace SWeetJelly.Tween.Framework.Unity
 
         private void StopCurrentSilently()
         {
+            if (StopManualControl() && CurrentPlayback != null) return;
             generation++;
             var operation = CurrentPlayback;
             var childRun = currentChildRun;

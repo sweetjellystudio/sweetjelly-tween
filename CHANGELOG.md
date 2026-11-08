@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2.2.0
+
+* [Added] Prepare and inspect supported serialized player timelines, transfer a live pose into exclusive control, sample both time directions silently, and explicitly resume or restore captured values.
+* [Added] CanvasGroup alpha, anchored position and local scale with nested Sequence/Group, finite loops, both endpoint modes, easing and observed legacy frame-boundary holds.
+* [Added] Capability/ownership preflight, replacement-run awaiting, stale-token protection and control cleanup on member/target termination, preserving normal Play/Snap/custom subclass contracts.
+* [Added] Timeline contract, migration notes, sample and EditMode/PlayMode regressions.
+
 ## 2.1.0
 
 * [Added] Await one TweenPlayer command with PlayAsync(ct)/PlayAsync(bool forward, ct), including finite loops, Group, Sequence and Animator observation. Existing custom subclasses opt in through protected run hooks.

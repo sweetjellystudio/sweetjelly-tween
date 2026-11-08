@@ -25,3 +25,7 @@ The proposed broader TweenPlayer await adapter and consumer simplification are [
 ## Migrating from 2.0 to 2.1
 
 Version 2.1.0 includes the separately approved player async and UITK contracts. No serialized fields or GUIDs are migrated. Existing synchronous custom subclasses remain supported; safe async consumption requires explicit protected run hooks. See [async and UITK](async-and-uitk.md) and CHANGELOG 2.1.0. The earlier deferral above describes the historical 2.0 transition, not the current working tree. The package version is 2.1.0; actual tag publication and game dependency updates remain separate steps.
+
+## Migrating from 2.1 to 2.2
+
+No serialized-data migration is required. Intermediate-state consumers can opt into [prepared timelines and control transfer](timeline-control.md). A transfer cancels the previous PlayAsync; await the new control execution instead. Preserve the prepared snapshot for restoration/review, and explicitly choose automatic resumption. Existing normal Play, Snap, custom subclasses and event behavior remain. Publication and game dependency changes are separate tasks.
