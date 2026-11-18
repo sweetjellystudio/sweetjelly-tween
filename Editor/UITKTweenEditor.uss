@@ -9,3 +9,12 @@
 .selected-node { background-color: #315980; color: #ffffff; }
 .message { padding: 6px; min-height: 32px; white-space: normal; }
 #tween-asset, #preview-time { flex-grow: 1; }
+
+.preview-surface { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background-color: #243346; }
+.preview-document { flex-grow: 1; }
+#preview-view-controls IntegerField { width: 210px; }
+#preview-view-controls FloatField { width: 180px; }
+#preview-view-controls .unity-base-field__label { min-width: 75px; }
+#preview-view-controls #preview-width .unity-base-field__label { min-width: 110px; }
+#preview-only-label { margin-left: 12px; -unity-text-align: middle-left; }
+.active-fit { background-color: #315980; }

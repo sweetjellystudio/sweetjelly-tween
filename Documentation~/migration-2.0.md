@@ -32,4 +32,9 @@ No serialized-data migration is required. Intermediate-state consumers can opt i
 
 ## Migrating from 2.2 to 2.3
 
-Existing Component Players, public/protected APIs, serialized fields and GUIDs require no migration. Opt into [saved UITK authoring](uitk-authoring.md) with a UITKTweenAsset and a consumer-provided root/service binding. New UITK backward playback retraces the prepared forward trajectory; existing component authored backward and Snap events retain their semantics. New Restore reinstates original inline declarations, including absent declarations, while Dispose retains pose. Rebind explicitly after detach/document recreation and prepare fresh values. Package sample Feature slots are consumer examples, not a new game framework dependency. Version 2.3.0 is local development until separately published; game adapters/dependencies and public-tag verification remain separate.
+Existing Component Players, public/protected APIs, serialized fields and GUIDs require no migration. Opt into [saved UITK authoring](uitk-authoring.md) with a UITKTweenAsset and a consumer-provided root/service binding. New UITK backward playback retraces the prepared forward trajectory; existing component authored backward and Snap events retain their semantics. New Restore reinstates original inline declarations, including absent declarations, while Dispose retains pose. Rebind explicitly after detach/document recreation and prepare fresh values. Package sample Feature slots are consumer examples, not a new game framework dependency. Tag publication, game adapters/dependencies and public-tag verification remain separate.
+
+
+## Migrating from 2.3.0 to 2.3.1
+
+No runtime API, serialized asset or dependency migration is required. Version 2.3.1 adds editor-only [preview canvas/view controls](uitk-authoring.md#preview-canvas-and-view). Canvas dimensions and view mode are stored in user-local EditorPrefs, not Tween assets or runtime UI settings. Existing saved definitions and consumer code remain compatible. Tag publication and public-tag consumption verification are separate steps.

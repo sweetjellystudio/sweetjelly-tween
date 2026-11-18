@@ -2,7 +2,7 @@
 
 Use the installed unity-package coordinator. Read [architecture][architecture], [timing and ownership decisions][adr] and [migration][migration] before changing playback rules, callbacks, handles, player lifecycle, assembly references or public/protected APIs.
 
-For saved UITK definitions, root binding, writer ownership, inline restoration or the dedicated editor, read [UITK authoring](Documentation~/uitk-authoring.md) and [ADR 0004](docs/adr/0004-uitk-authored-definitions-and-bound-players.md). Keep consumer concepts such as Feature/Show/Hide out of runtime contracts. Verify actual delayed numeric input, selection/reordering, save/reopen and window teardown in addition to runtime tests.
+For saved UITK definitions, root binding, writer ownership, inline restoration or the dedicated editor, read [UITK authoring](Documentation~/uitk-authoring.md) and [ADR 0004](docs/adr/0004-uitk-authored-definitions-and-bound-players.md). Keep consumer concepts such as Feature/Show/Hide out of runtime contracts. Verify actual delayed numeric input, selection/reordering, save/reopen and window teardown in addition to runtime tests. Preview viewport changes also require fixed local-coordinate/uniform-scale checks across resize, Fit/Zoom/pan, and proof that assets and runtime settings remain unchanged.
 
 *   Preserve existing public/protected names, named arguments, enum values, script/asset GUIDs and serialized player fields. Keep existing TMP, uGUI, Transform, Animator and custom TweenPlayer subclass consumption supported.
 *   Contract/Domain/App remain Unity-independent. Domain owns timing/easing calculations; App owns scheduling and execution handles. Keep Unity targets and lifecycle integration in Framework.Unity.

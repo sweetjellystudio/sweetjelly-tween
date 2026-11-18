@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2.3.1
+
+* [Added] Editor-only fixed preview Canvas Width/Height with persisted user-local settings, uniform Fit/Zoom, wheel navigation and middle-button pan. Window resize preserves logical coordinates and the current preview execution; logical size changes restore/reprepare the preview.
+* [Fixed] Preserve in-progress numeric Zoom text when resizing the preview viewport.
+
+Git tag publication and public Git-tag installation validation are separate.
+
 ## 2.3.0
 
 * [Added] Saved UITK definitions and explicit root-bound Players with opacity, pixel XY translate and XY scale, finite loops and nested Sequence/Group.
@@ -7,8 +14,6 @@
 * [Added] Root-scoped target diagnostics, exclusive property writers, explicit rebinding and detach generation invalidation.
 * [Added] Dedicated UI Toolkit editor with production UXML selection, delayed numeric input, curve/composition editing, Undo, save/reopen and preview playback/scrubbing.
 * [Added] Independent-copy consumer sample and runtime, serialization and actual Editor interaction regressions. Existing component fields, GUIDs, backward/Snap and custom subclass contracts remain unchanged.
-
-This is a local development version. Publication and public Git-tag installation validation are separate.
 
 ## 2.2.0
 
