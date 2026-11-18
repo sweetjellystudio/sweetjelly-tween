@@ -1,0 +1,8 @@
+{
+    "name": "SWeetJelly.Tween.Editor",
+    "rootNamespace": "SWeetJelly.Tween.Editor",
+    "references": ["SWeetJelly.Tween.Contract", "SWeetJelly.Tween.App", "SWeetJelly.Tween.Framework.Unity"],
+    "includePlatforms": ["Editor"],
+    "autoReferenced": true,
+    "noEngineReferences": false
+}

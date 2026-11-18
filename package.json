@@ -1,6 +1,6 @@
 {
     "name": "com.sweetjelly.tween",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "displayName": "SWeetJelly Tween",
     "description": "This is SWeetJelly Tween",
     "unity": "6000.3",
@@ -21,6 +21,11 @@
             "displayName": "Tween Sample",
             "description": "Sample scene and assets for Tween Sample.",
             "path": "Samples~/Basic"
+        },
+        {
+            "displayName": "UI Toolkit Tween Authoring",
+            "description": "Production UXML, editable Show/Hide/Focus assets and two independently bound runtime copies.",
+            "path": "Samples~/UITKAuthoring"
         }
     ],
     "license": "MIT"

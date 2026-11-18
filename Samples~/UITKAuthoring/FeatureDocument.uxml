@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="FeatureDocument.uss" />
+    <ui:VisualElement name="featureRoot" class="feature">
+        <ui:Label name="title" text="A small moment" class="feature-title" />
+        <ui:VisualElement name="art" class="feature-art">
+            <ui:Label text="SWEET JELLY" class="art-caption" />
+        </ui:VisualElement>
+        <ui:Label text="Select title or art in the Tween editor. Change the saved motion; keep the caller code." class="feature-hint" />
+    </ui:VisualElement>
+</ui:UXML>

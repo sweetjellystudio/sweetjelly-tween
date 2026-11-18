@@ -1,0 +1,5 @@
+{
+    "name": "SWeetJelly.Tween.UITKAuthoring.Sample",
+    "references": ["SWeetJelly.Tween.Contract", "SWeetJelly.Tween.App", "SWeetJelly.Tween.Framework.Unity"],
+    "autoReferenced": true
+}

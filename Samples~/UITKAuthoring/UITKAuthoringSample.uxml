@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="UITKAuthoringSample.uss" />
+    <ui:VisualElement name="sampleRoot" class="sample">
+        <ui:Label text="One authored motion. Two independent copies." class="sample-heading" />
+        <ui:VisualElement name="copies" class="copies" />
+        <ui:Label name="status" text="Choose Show, Hide or Focus. Scrub A without moving B." class="sample-status" />
+    </ui:VisualElement>
+</ui:UXML>

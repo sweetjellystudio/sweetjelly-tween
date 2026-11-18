@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 2.3.0
+
+* [Added] Saved UITK definitions and explicit root-bound Players with opacity, pixel XY translate and XY scale, finite loops and nested Sequence/Group.
+* [Added] Captured trajectories shared by runtime and preview, silent sampling/instant endpoints, original inline/USS restoration, clock overrides and execution-specific cancellation.
+* [Added] Root-scoped target diagnostics, exclusive property writers, explicit rebinding and detach generation invalidation.
+* [Added] Dedicated UI Toolkit editor with production UXML selection, delayed numeric input, curve/composition editing, Undo, save/reopen and preview playback/scrubbing.
+* [Added] Independent-copy consumer sample and runtime, serialization and actual Editor interaction regressions. Existing component fields, GUIDs, backward/Snap and custom subclass contracts remain unchanged.
+
+This is a local development version. Publication and public Git-tag installation validation are separate.
+
 ## 2.2.0
 
 * [Added] Prepare and inspect supported serialized player timelines, transfer a live pose into exclusive control, sample both time directions silently, and explicitly resume or restore captured values.

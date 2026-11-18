@@ -1,0 +1,11 @@
+.tween-editor { padding: 6px; }
+.workspace { flex-direction: row; flex-grow: 1; min-height: 250px; }
+.elements { width: 220px; border-right-width: 1px; border-right-color: #4b5364; }
+.canvas { flex-grow: 1; min-width: 400px; overflow: hidden; background-color: #162131; }
+.preview-template { flex-grow: 1; }
+.inspector { width: 310px; padding-left: 8px; }
+.nodes { height: 175px; flex-shrink: 0; }
+.nodes Button, .elements Button { -unity-text-align: middle-left; }
+.selected-node { background-color: #315980; color: #ffffff; }
+.message { padding: 6px; min-height: 32px; white-space: normal; }
+#tween-asset, #preview-time { flex-grow: 1; }

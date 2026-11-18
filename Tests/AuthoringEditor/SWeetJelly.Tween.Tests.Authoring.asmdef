@@ -1,0 +1,7 @@
+{
+    "name": "SWeetJelly.Tween.Tests.Authoring",
+    "references": ["SWeetJelly.Tween.Contract", "SWeetJelly.Tween.App", "SWeetJelly.Tween.Framework.Unity", "SWeetJelly.Tween.Editor"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"],
+    "autoReferenced": false
+}
