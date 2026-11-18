@@ -29,3 +29,7 @@ Version 2.1.0 includes the separately approved player async and UITK contracts. 
 ## Migrating from 2.1 to 2.2
 
 No serialized-data migration is required. Intermediate-state consumers can opt into [prepared timelines and control transfer](timeline-control.md). A transfer cancels the previous PlayAsync; await the new control execution instead. Preserve the prepared snapshot for restoration/review, and explicitly choose automatic resumption. Existing normal Play, Snap, custom subclasses and event behavior remain. Publication and game dependency changes are separate tasks.
+
+## Migrating from 2.2 to 2.3
+
+Existing Component Players, public/protected APIs, serialized fields and GUIDs require no migration. Opt into [saved UITK authoring](uitk-authoring.md) with a UITKTweenAsset and a consumer-provided root/service binding. New UITK backward playback retraces the prepared forward trajectory; existing component authored backward and Snap events retain their semantics. New Restore reinstates original inline declarations, including absent declarations, while Dispose retains pose. Rebind explicitly after detach/document recreation and prepare fresh values. Package sample Feature slots are consumer examples, not a new game framework dependency. Version 2.3.0 is local development until separately published; game adapters/dependencies and public-tag verification remain separate.

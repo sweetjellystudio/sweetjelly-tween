@@ -13,3 +13,5 @@
 *   **Sequence**: child players played in order as one presentation operation.
 *   **Prepared timeline**: a captured presentation trajectory that gives the same pose when revisiting the same time.
 *   **Control**: exclusive ownership of one execution of a prepared timeline, with either an automatic clock or direct time sampling.
+*   **Authored definition**: saved description of targets, values, timing and composition, shared independently of any execution.
+*   **Binding**: association of an authored definition with one consumer-provided target scope and its lifetime.

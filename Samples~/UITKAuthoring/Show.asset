@@ -1,0 +1,316 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17c82722fde8ecb42a44d41a518e579d, type: 3}
+  m_Name: Show
+  m_EditorClassIdentifier: SWeetJelly.Tween.Framework.Unity::SWeetJelly.Tween.Framework.Unity.UITKTweenAsset
+  AuthoringDocument: {fileID: 9197481963319205126, guid: 0f4d46eba50b1ee448b77a4d2fba43f6,
+    type: 3}
+  UpdateMethod: 0
+  UnscaledTime: 1
+  Root:
+    rid: 8173999655581122697
+  references:
+    version: 2
+    RefIds:
+    - rid: 8173999655581122697
+      type: {class: UITKTweenNode, ns: SWeetJelly.Tween.Framework.Unity, asm: SWeetJelly.Tween.Framework.Unity}
+      data:
+        Label: Show
+        Kind: 2
+        TargetName:
+        Property: 0
+        FromCurrent: 1
+        From: {x: 0, y: 0}
+        To: {x: 1, y: 1}
+        Duration: 0.3
+        Delay: 0
+        Repetitions: 1
+        Loop: 0
+        Easing: 0
+        UseCurve: 0
+        Curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        Children:
+        - rid: 8173999655581122698
+        - rid: 8173999655581122699
+    - rid: 8173999655581122698
+      type: {class: UITKTweenNode, ns: SWeetJelly.Tween.Framework.Unity, asm: SWeetJelly.Tween.Framework.Unity}
+      data:
+        Label: Title together
+        Kind: 2
+        TargetName:
+        Property: 0
+        FromCurrent: 1
+        From: {x: 0, y: 0}
+        To: {x: 1, y: 1}
+        Duration: 0.3
+        Delay: 0
+        Repetitions: 1
+        Loop: 0
+        Easing: 0
+        UseCurve: 0
+        Curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        Children:
+        - rid: 8173999655581122700
+        - rid: 8173999655581122701
+    - rid: 8173999655581122699
+      type: {class: UITKTweenNode, ns: SWeetJelly.Tween.Framework.Unity, asm: SWeetJelly.Tween.Framework.Unity}
+      data:
+        Label: Delayed art
+        Kind: 2
+        TargetName:
+        Property: 0
+        FromCurrent: 1
+        From: {x: 0, y: 0}
+        To: {x: 1, y: 1}
+        Duration: 0.3
+        Delay: 0
+        Repetitions: 1
+        Loop: 0
+        Easing: 0
+        UseCurve: 0
+        Curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        Children:
+        - rid: 8173999655581122702
+        - rid: 8173999655581122703
+    - rid: 8173999655581122700
+      type: {class: UITKTweenNode, ns: SWeetJelly.Tween.Framework.Unity, asm: SWeetJelly.Tween.Framework.Unity}
+      data:
+        Label: title Opacity
+        Kind: 0
+        TargetName: title
+        Property: 0
+        FromCurrent: 0
+        From: {x: 0, y: 0}
+        To: {x: 1, y: 1}
+        Duration: 0.6
+        Delay: 0
+        Repetitions: 1
+        Loop: 0
+        Easing: 2
+        UseCurve: 1
+        Curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 2
+            outSlope: 2
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        Children: []
+    - rid: 8173999655581122701
+      type: {class: UITKTweenNode, ns: SWeetJelly.Tween.Framework.Unity, asm: SWeetJelly.Tween.Framework.Unity}
+      data:
+        Label: title Translate
+        Kind: 0
+        TargetName: title
+        Property: 1
+        FromCurrent: 0
+        From: {x: 0, y: 24}
+        To: {x: 0, y: 0}
+        Duration: 0.6
+        Delay: 0
+        Repetitions: 1
+        Loop: 0
+        Easing: 2
+        UseCurve: 0
+        Curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        Children: []
+    - rid: 8173999655581122702
+      type: {class: UITKTweenNode, ns: SWeetJelly.Tween.Framework.Unity, asm: SWeetJelly.Tween.Framework.Unity}
+      data:
+        Label: art Scale
+        Kind: 0
+        TargetName: art
+        Property: 2
+        FromCurrent: 0
+        From: {x: 0.65, y: 0.65}
+        To: {x: 1, y: 1}
+        Duration: 0.7
+        Delay: 0.15
+        Repetitions: 1
+        Loop: 0
+        Easing: 2
+        UseCurve: 0
+        Curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        Children: []
+    - rid: 8173999655581122703
+      type: {class: UITKTweenNode, ns: SWeetJelly.Tween.Framework.Unity, asm: SWeetJelly.Tween.Framework.Unity}
+      data:
+        Label: art Opacity
+        Kind: 0
+        TargetName: art
+        Property: 0
+        FromCurrent: 0
+        From: {x: 0, y: 0}
+        To: {x: 1, y: 1}
+        Duration: 0.7
+        Delay: 0.15
+        Repetitions: 1
+        Loop: 0
+        Easing: 2
+        UseCurve: 0
+        Curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        Children: []

@@ -1,0 +1,5 @@
+.feature { flex-grow: 1; padding: 24px; background-color: #203248; }
+.feature-title { font-size: 26px; color: #f6eddf; margin-bottom: 18px; }
+.feature-art { width: 160px; height: 130px; background-color: #dc7995; border-radius: 20px; justify-content: center; align-items: center; transform-origin: 50% 50%; }
+.art-caption { color: #241d35; font-size: 16px; -unity-font-style: bold; }
+.feature-hint { white-space: normal; color: #c6d1df; margin-top: 22px; max-width: 360px; }

@@ -30,7 +30,7 @@ Players own their active handles and child subscriptions. Generic property playe
 
 Framework.Unity additionally owns per-command player run tokens, Task entry points and run-aware composition. The pure scheduling/handle model is reused. Existing subclasses opt in through protected hooks; legacy player events are not execution identifiers. VisualElement opacity/scale cases own detach subscriptions only while active and reuse the normal service/handle path. The UIElements built-in module is declared explicitly. See [the follow-up decision](docs/adr/0002-player-runs-and-uitk-lifetime.md) and [the supported contract](Documentation~/async-and-uitk.md).
 
-The game owns page/view sequencing and game-specific animation policy. Inspector element binding, additional UITK properties and consumer migration remain [follow-up work][todo].
+The game owns page/view sequencing and game-specific animation policy. Saved UITK authoring has its own definition/binding path described below; additional properties and game consumer migration remain [follow-up work][todo].
 
 ##  Prepared timelines
 
@@ -40,3 +40,13 @@ Live transfer preserves observed frame-boundary holds and current endpoints, can
 
 [adr]: docs/adr/0001-playback-rules-and-owned-lifetime.md
 [todo]: Documentation~/TODO.md
+
+##  Saved UI Toolkit authoring
+
+UITKTweenAsset/UITKTweenNode contain reusable authoring data and a production UXML reference. Bind accepts an explicit VisualElement root, ITweenService and optional graph-wide clock/lane overrides. UITKTweenPlayer owns that binding, preparation generation, detach subscriptions and active execution. Neither the asset nor the package knows Feature/Show/Hide; those are thin sample consumer concepts.
+
+UITKTweenTimeline freezes node values/curves, root-scoped target identity, sequential captured starts and original inline declarations. UITKTweenControl owns one automatic or directly sampled execution. Writer keys use actual element reference plus property; another bound Player's conflicting execution is rejected before replacement/writes. Detach or explicit Rebind invalidates the old preparation and cancels its execution. Restore retains capture while restoring original inline declarations, including absent declarations, rather than permanently masking USS.
+
+The new trajectory uses existing Domain TweenTimelineTiming/easing and the App service/handle scheduler through a private TweenCase clock. Its runtime and Editor preview evaluate the same prepared graph. Its nominal composition boundaries do not rewrite legacy component scheduling/observed holds. New UITK-specific binding/evaluation remains in Framework.Unity because its values, snapshots and lifetime are Unity presentation responsibilities; no Unity types are added to Contract/Domain/App. Separate public UITK timeline/control types avoid changing the existing sealed component timeline's ownership and event contracts.
+
+SWeetJelly.Tween.Editor is Editor-only and references Framework.Unity/App/Contract. It owns element selection, nested authoring controls, Undo/save and a disposable preview tree with a private concrete service. It restores before panel detach invalidates the binding. Numeric controls commit on Enter/focus loss. No editor assembly is referenced by runtime. See [the contract](Documentation~/uitk-authoring.md) and [ADR 0004](docs/adr/0004-uitk-authored-definitions-and-bound-players.md).

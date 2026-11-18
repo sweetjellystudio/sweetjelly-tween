@@ -1,0 +1,9 @@
+#   UI Toolkit Tween authoring sample
+
+Open UITKAuthoringSample.unity after importing this sample. The scene contains one UIDocument and a thin consumer that clones FeatureDocument.uxml twice. Show, Hide and Focus are sample-owned asset slots; Tween itself has no dependency on those concepts.
+
+Double-click Show.asset to edit it in **Window > SWeetJelly > Tween UI Toolkit**. Select a property in the lower list, choose title/art in the element tree or preview, and edit values/timing/curve. Typed numbers commit on Enter/focus loss. Save, switch assets and reopen. Preview Play/Pause/Reverse/scrub uses the same prepared evaluator as runtime and restores the clone's original inline styles on reset/reload/close.
+
+Enter Play Mode. Use A/B Show, Hide or Focus independently. The Show slider samples only its copy; End silently applies the shown endpoint and Restore recovers the prepared inline baseline. Edit Show's curve or composition, save and restart Play Mode to prepare the changed definition with the same consumer code. An existing prepared trajectory deliberately retains its captured definition until explicit re-preparation. The included title opacity curve was edited through the dedicated window's curve preset picker; its normalized midpoint is 0.25.
+
+The parent column owns placement; title/art own their tween transforms. The sample supplies a local TweenService and lane ticks to stay independently runnable, initializes the engine's built-in runtime font and uses its own theme/styles. Production consumers can inject their existing service and supply their actual attached root after USS/layout resolution. FeatureExample demonstrates explicit cancellation/disposal; it is not a required superclass. See Documentation~/uitk-authoring.md in the package for the full execution and reconnection contract.

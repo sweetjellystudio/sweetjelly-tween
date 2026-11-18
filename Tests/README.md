@@ -53,3 +53,8 @@ TweenPlayerAsyncTest covers execution replacement, token ownership, loop-wide co
 ## Prepared timeline control
 
 TweenPlayerTimelineTest covers pose-preserving live transfer, silent endpoint sampling, regrab/resume, captured endpoints/easing/delay, sequential same-property restoration, nested composition, finite loops and observed frame-boundary holds, capability rejection, stale controls/tokens and terminal observer replacement. TweenPlayerTimelineLifetimeTest checks actual frame progression, disable/destroy and released targets while the manual clock is parked. Run them with the ordinary package regressions; fresh NUnit XML, sample/Inspector observations and separate declared-dependency/Player results belong to the host evidence.
+
+
+## Saved UITK authoring
+
+UITKTweenPlayerTest uses real panels for independently bound copies, frozen endpoints/curves, same-property sequencing, finite loops, clocks, writer preflight, transfer/terminal semantics, stale tokens and detach/rebind. UITKTweenAuthoringTest uses a disposable EditorWindow and Unity asset serialization for saved nested definitions, actual pointer selection/reorder, delayed numeric key entry across updates (including deletion and Enter/focus-loss commit), save/reopen and reset/close inline restoration. Test fixtures preserve a pre-existing fixture folder. Physical curve-preset editing, runtime sample rendering and ordinary Mono/IL2CPP executions are separate host observations, not inferred from field assignment or compilation.

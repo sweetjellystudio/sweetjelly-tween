@@ -2,6 +2,8 @@
 
 Reusable easing, fluent Unity target tweens, execution handles/Task adapters and designer-facing TweenPlayers. Requires Unity 6.3 LTS.
 
+Version 2.3 adds [saved UI Toolkit authoring](Documentation~/uitk-authoring.md): production UXML element selection, opacity/px translate/scale, nested Sequence/Group, runtime root binding and the same prepared trajectory for preview/scrubbing. Open **Window > SWeetJelly > Tween UI Toolkit**, or double-click a UITKTweenAsset. Import **UI Toolkit Tween Authoring** from Package Manager for editable assets and two runtime copies. Existing component assets require no migration.
+
 ##  Installation
 
 After publishing the version tag, add the custom Git dependencies to the consuming project's Packages/manifest.json:
@@ -9,7 +11,7 @@ After publishing the version tag, add the custom Git dependencies to the consumi
 ```json
 {
   "dependencies": {
-    "com.sweetjelly.tween": "https://github.com/sweetjellystudio/sweetjelly-tween.git#v2.2.0",
+    "com.sweetjelly.tween": "https://github.com/sweetjellystudio/sweetjelly-tween.git#v2.3.0",
     "com.sweetjelly.bootstrapper": "https://github.com/sweetjellystudio/sweetjelly-bootstrapper.git#v2.0.0"
   }
 }
