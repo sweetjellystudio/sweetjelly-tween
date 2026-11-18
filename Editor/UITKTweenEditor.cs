@@ -16,7 +16,8 @@ namespace SWeetJelly.Tween.Editor
         [SerializeField] private UITKTweenAsset asset;
         private UITKTweenNode selected;
         private ScrollView elements, nodes, inspector;
-        private VisualElement canvas, previewRoot;
+        private UITKTweenPreviewViewport canvas;
+        private VisualElement previewRoot;
         private Label message;
         private Slider scrub;
         private ObjectField assetField;
@@ -70,10 +71,12 @@ namespace SWeetJelly.Tween.Editor
             toolbar.Add(new ToolbarButton(Save) { text = "Save", name = "save-tween" });
             toolbar.Add(new ToolbarButton(LoadDocument) { text = "Reload UXML", name = "reload-document" });
             rootVisualElement.Add(toolbar);
+            canvas = new UITKTweenPreviewViewport(ResetPreview);
+            rootVisualElement.Add(canvas.Controls);
             var workspace = new VisualElement(); workspace.AddToClassList("workspace");
             elements = new ScrollView { name = "element-tree" }; elements.AddToClassList("elements");
             workspace.Add(elements);
-            canvas = new VisualElement { name = "preview-canvas" }; canvas.AddToClassList("canvas"); workspace.Add(canvas);
+            workspace.Add(canvas);
             inspector = new ScrollView { name = "node-inspector" }; inspector.AddToClassList("inspector"); workspace.Add(inspector);
             rootVisualElement.Add(workspace);
             var playback = new Toolbar();
@@ -121,10 +124,10 @@ namespace SWeetJelly.Tween.Editor
         private void LoadDocument()
         {
             if (canvas == null) return;
-            StopPreview(); canvas.Clear(); elements.Clear(); previewRoot = null;
+            StopPreview(); canvas.Document.Clear(); elements.Clear(); previewRoot = null;
             if (asset == null || asset.AuthoringDocument == null) { message.text = "Assign a production UXML document in the inspector."; return; }
             var template = asset.AuthoringDocument.Instantiate(); template.AddToClassList("preview-template");
-            canvas.Add(template);
+            canvas.Document.Add(template);
             previewRoot = template.childCount == 1 ? template[0] : template;
             previewRoot.RegisterCallback<PointerDownEvent>(evt =>
             {
@@ -271,6 +274,7 @@ namespace SWeetJelly.Tween.Editor
         private void EnsureControl()
         {
             if (asset == null || previewRoot == null) throw new InvalidOperationException("Assign the production UXML first.");
+            if (!canvas.IsLayoutReady) throw new InvalidOperationException("Wait for the preview canvas layout to resolve after changing its size.");
             if (player == null)
             {
                 try

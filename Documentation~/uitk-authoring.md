@@ -1,6 +1,6 @@
 #   Saved UI Toolkit Tween authoring
 
-Available in local development version 2.3.0, requiring Unity 6.3 LTS. Git publication and game migration are separate. Existing Component Players, custom subclasses, serialized fields/GUIDs and Snap events keep their existing contracts.
+Version 2.3.1 requires Unity 6.3 LTS. Saved authoring was introduced in 2.3.0; preview canvas/view controls require 2.3.1. Git publication and game migration are separate. Existing Component Players, custom subclasses, serialized fields/GUIDs and Snap events keep their existing contracts.
 
 ##  Designer workflow
 
@@ -15,6 +15,14 @@ Choose configured start/end or capture-current start/end, duration, initial dela
 Typed numeric values commit on Enter or focus loss; intermediate decimal text stays editable. Curve controls and selection/reorder are immediate authoring actions. Save persists the definition, not preview inline values. Undo/Redo restores edits. Change assets and reopen to reuse the saved definition and document.
 
 Play, Pause, Reverse and the seconds slider use the runtime's prepared evaluator on a private clone and private service. Editor preview advances wall-clock seconds while runtime uses its selected clock. At matching timeline seconds the values match. Reset, document reload/change and window close restore original inline declarations and release preview work. Production UXML/USS and game trees are never preview outputs.
+
+### Preview canvas and view
+
+Canvas Width and Height set the available logical UI size, initially 1920×1080 UI pixels. Values from 1 to 16384 apply on Enter or focus loss. The production root keeps its authored layout rules inside that fixed canvas. Changing the logical size restores/stops the preview and resets its timeline; the next Play/scrub prepares after layout resolves.
+
+Fit centers the entire canvas with a margin and recalculates a uniform display scale when the window changes size. Manual Zoom is 10–400%, entered on Enter/focus loss; the 100% button shows one logical unit per panel unit. Wheel zoom keeps the canvas point under the pointer fixed. Drag with the middle mouse button to move the view; Fit recenters it. Fit may go outside the manual zoom range to show a very large/small canvas. Starting manual navigation applies the manual bounds.
+
+Zoom, Fit, pan and window resizing affect only an outer preview transform. They retain logical coordinates, the production root’s own scale/translate, selection and the current playback/scrub execution. Manual resize retains the selected scale and logical center; Fit resize changes only the display scale. Canvas size and the last view mode/manual zoom are remembered in user-local EditorPrefs across assets and window reopening. Pan offset is temporary. These controls do not dirty/save Tween assets or production UXML/USS, and do not configure runtime UI or PanelSettings.
 
 ##  Consumer binding and playback
 
