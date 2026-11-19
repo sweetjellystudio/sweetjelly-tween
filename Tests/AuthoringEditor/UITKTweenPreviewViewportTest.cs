@@ -195,6 +195,59 @@ namespace SWeetJelly.Tween.Tests.Authoring
             AssertUnchangedAssets();
         }
 
+        [UnityTest] public IEnumerator DpiRoundedPortraitCanvasCanPlayAfterLayoutSettles()
+        {
+            Width.value = 1170; Height.value = 2532; Click("preview-fit");
+            yield return null; yield return null; yield return null;
+            Click("preview-play"); yield return null; yield return null;
+            Assert.That(window.rootVisualElement.Q<Label>("tween-diagnostics").text, Does.Not.Contain("Wait for the preview canvas layout"));
+            Assert.That(Time.value, Is.GreaterThan(0), "A settled DPI-rounded canvas must start playback.");
+            Click("preview-pause");
+            Assert.That(Surface.style.width.value.value, Is.EqualTo(1170));
+            Assert.That(Surface.style.height.value.value, Is.EqualTo(2532));
+            AssertUnchangedAssets();
+        }
+
+        [UnityTest] public IEnumerator DetachedCanvasIsRejectedAndAttachedLayoutCanPlay()
+        {
+            var canvas = View; var parent = canvas.parent; int index = parent.IndexOf(canvas);
+            canvas.RemoveFromHierarchy();
+            Width.value = 1170; Height.value = 2532; Click("preview-play");
+            Assert.That(window.rootVisualElement.Q<Label>("tween-diagnostics").text, Does.Contain("Wait for the preview canvas layout"));
+            Assert.That(Time.value, Is.Zero);
+            parent.Insert(index, canvas); yield return null; yield return null; yield return null;
+            Click("preview-play"); yield return null; yield return null;
+            Assert.That(Time.value, Is.GreaterThan(0));
+            AssertUnchangedAssets();
+        }
+
+        [UnityTest] public IEnumerator VariousCanvasSizesAndViewZoomsCanStartPlayback()
+        {
+            var sizes = new[] { new Vector2Int(1170, 2532), new Vector2Int(1172, 2532), new Vector2Int(1171, 2533),
+                new Vector2Int(1080, 1920), new Vector2Int(900, 1600), new Vector2Int(321, 641), new Vector2Int(16383, 16381) };
+            float panelPixelsPerPoint = Surface.scaledPixelsPerPoint;
+            TestContext.WriteLine($"Actual panel pixels per point: {panelPixelsPerPoint}");
+            foreach (var size in sizes)
+            {
+                Width.value = size.x; Height.value = size.y;
+                foreach (int zoom in new[] { -1, 10, 100, 400 })
+                {
+                    Click("preview-reset");
+                    if (zoom < 0) Click("preview-fit"); else Zoom.value = zoom;
+                    yield return null; yield return null;
+                    Click("preview-play"); yield return null; yield return null;
+                    string context = $"Canvas {size.x}x{size.y}, {(zoom < 0 ? "Fit" : zoom + "%")}";
+                    Assert.That(window.rootVisualElement.Q<Label>("tween-diagnostics").text,
+                        Does.Not.Contain("Wait for the preview canvas layout"), context);
+                    Assert.That(Time.value, Is.GreaterThan(0), context);
+                    Assert.That(Surface.scaledPixelsPerPoint, Is.EqualTo(panelPixelsPerPoint).Within(.0001), context);
+                    Assert.That(Width.value, Is.EqualTo(size.x)); Assert.That(Height.value, Is.EqualTo(size.y));
+                    Click("preview-pause");
+                }
+            }
+            AssertUnchangedAssets();
+        }
+
         [UnityTest] public IEnumerator WheelAnchorsCanvasPointAndMiddleDragPansWithoutChangingLayout()
         {
             Zoom.value = 50; yield return null;

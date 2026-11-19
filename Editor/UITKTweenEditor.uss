@@ -1,10 +1,34 @@
 .tween-editor { padding: 6px; }
-.workspace { flex-direction: row; flex-grow: 1; min-height: 250px; }
-.elements { width: 220px; border-right-width: 1px; border-right-color: #4b5364; }
-.canvas { flex-grow: 1; min-width: 400px; overflow: hidden; background-color: #162131; }
+.editor-layout, .editor-split { flex-grow: 1; min-width: 0; min-height: 0; }
+.upper-workspace { min-height: 220px; }
+.editor-pane { min-width: 0; min-height: 0; overflow: hidden; }
+#elements-pane { min-width: 180px; }
+#inspector-pane { min-width: 260px; }
+#preview-pane { min-width: 280px; }
+#hierarchy-pane { min-height: 150px; }
+#elements-split { min-width: 460px; }
+.pane-title { padding: 5px 7px; -unity-font-style: bold; background-color: #30343b; flex-shrink: 0; }
+.section-title { margin-top: 10px; margin-bottom: 5px; -unity-font-style: bold; }
+.help-text { white-space: normal; flex-shrink: 0; margin: 4px 7px; }
+.elements, .nodes, .inspector { flex-grow: 1; min-height: 0; }
+.elements .unity-scroll-view__content-container, .nodes .unity-scroll-view__content-container { align-items: stretch; }
+.elements Button { white-space: nowrap; flex-shrink: 0; }
+.canvas { flex-grow: 1; min-height: 0; overflow: hidden; background-color: #162131; }
 .preview-template { flex-grow: 1; }
-.inspector { width: 310px; padding-left: 8px; }
-.nodes { height: 175px; flex-shrink: 0; }
+.inspector { padding: 0 8px 8px 8px; }
+.inspector .unity-scroll-view__content-container > .unity-base-field > .unity-base-field__label { min-width: 112px; width: 112px; white-space: normal; }
+.inspector .help-text { margin-left: 0; margin-right: 0; }
+.child-actions, .move-parent, .node-row { flex-direction: row; }
+.child-actions Button { flex-grow: 1; min-width: 0; }
+.child-select { white-space: normal; -unity-text-align: middle-left; }
+.move-parent DropdownField { flex-grow: 1; flex-shrink: 1; min-width: 0; }
+.move-parent DropdownField > .unity-base-field__label { min-width: 55px; }
+.node-children { padding-left: 18px; }
+.node-row { flex-shrink: 0; }
+.node-select { flex-grow: 1; white-space: nowrap; }
+.node-disclosure, #leaf-indent { width: 20px; min-width: 20px; flex-shrink: 0; }
+.collapsed-children { display: none; }
+.graph-toolbar { flex-wrap: wrap; height: auto; min-height: 22px; flex-shrink: 0; }
 .nodes Button, .elements Button { -unity-text-align: middle-left; }
 .selected-node { background-color: #315980; color: #ffffff; }
 .message { padding: 6px; min-height: 32px; white-space: normal; }
