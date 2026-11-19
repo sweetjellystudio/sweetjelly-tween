@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased
+## 2.3.2
 
 * [Added] Named Editor panels, user-local resizable layout with Reset Layout, wrapped Inspector guidance and horizontal scrolling for long element/tween names.
 * [Added] Collapsible Tween hierarchy, explicit Group/Sequence child authoring and Move To parent selection with subtree-preserving Undo/Redo.

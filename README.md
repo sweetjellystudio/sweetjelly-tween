@@ -6,6 +6,8 @@ Version 2.3 adds [saved UI Toolkit authoring](Documentation~/uitk-authoring.md):
 
 Version 2.3.1 adds editor-only fixed preview canvas dimensions, Fit/Zoom and pointer navigation. View settings are user-local and preserve logical coordinates and playback while resizing the window.
 
+Version 2.3.2 adds named, resizable authoring panels, explicit Group/Sequence child controls and subtree moves, and fixes preview readiness at fractional display scales.
+
 ##  Installation
 
 After publishing the version tag, add the custom Git dependencies to the consuming project's Packages/manifest.json:
@@ -13,7 +15,7 @@ After publishing the version tag, add the custom Git dependencies to the consumi
 ```json
 {
   "dependencies": {
-    "com.sweetjelly.tween": "https://github.com/sweetjellystudio/sweetjelly-tween.git#v2.3.1",
+    "com.sweetjelly.tween": "https://github.com/sweetjellystudio/sweetjelly-tween.git#v2.3.2",
     "com.sweetjelly.bootstrapper": "https://github.com/sweetjellystudio/sweetjelly-bootstrapper.git#v2.0.0"
   }
 }

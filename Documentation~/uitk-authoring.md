@@ -1,12 +1,12 @@
 #   Saved UI Toolkit Tween authoring
 
-Version 2.3.1 requires Unity 6.3 LTS. Saved authoring was introduced in 2.3.0; preview canvas/view controls require 2.3.1. Git publication and game migration are separate. Existing Component Players, custom subclasses, serialized fields/GUIDs and Snap events keep their existing contracts.
+Version 2.3.2 requires Unity 6.3 LTS. Saved authoring was introduced in 2.3.0; preview canvas/view controls require 2.3.1. Git publication and game migration are separate. Existing Component Players, custom subclasses, serialized fields/GUIDs and Snap events keep their existing contracts.
 
 ##  Designer workflow
 
 Create an asset with **Assets > Create > SWeetJelly > Tween > UI Toolkit Tween**. Double-click it, use its **Open UITK Tween Editor** Inspector button, or open **Window > SWeetJelly > Tween UI Toolkit**. Assign the production UXML document. The reference is remembered for editing; runtime uses the caller's actual root.
 
-The Unreleased Editor layout names four panels: **UXML Elements** selects property targets, **Preview** renders the disposable clone, **Tween Hierarchy** edits the composition, and **Tween Inspector** contains **Asset Settings** and **Selected Tween**. Inspector guidance wraps and scrolls vertically. Long element/tween names remain reachable by horizontal scrolling in their lists and full-text tooltips.
+The 2.3.2 Editor layout names four panels: **UXML Elements** selects property targets, **Preview** renders the disposable clone, **Tween Hierarchy** edits the composition, and **Tween Inspector** contains **Asset Settings** and **Selected Tween**. Inspector guidance wraps and scrolls vertically. Long element/tween names remain reachable by horizontal scrolling in their lists and full-text tooltips.
 
 Drag the vertical panel boundaries to resize UXML Elements/Tween Inspector, or the horizontal boundary above Tween Hierarchy to change its height. Readable minimum sizes constrain dragging. Panel sizes are remembered in user-local Editor preferences across assets and window reopening. **Reset Layout** restores panel sizes while retaining canvas/view settings and Tween data. Panel/window resizing keeps the preview clone, logical canvas and current playback/sample state; Fit recalculates only the display scale.
 
