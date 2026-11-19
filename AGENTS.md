@@ -4,6 +4,8 @@ Use the installed unity-package coordinator. Read [architecture][architecture], 
 
 For saved UITK definitions, root binding, writer ownership, inline restoration or the dedicated editor, read [UITK authoring](Documentation~/uitk-authoring.md) and [ADR 0004](docs/adr/0004-uitk-authored-definitions-and-bound-players.md). Keep consumer concepts such as Feature/Show/Hide out of runtime contracts. Verify actual delayed numeric input, selection/reordering, save/reopen and window teardown in addition to runtime tests. Preview viewport changes also require fixed local-coordinate/uniform-scale checks across resize, Fit/Zoom/pan, and proof that assets and runtime settings remain unchanged.
 
+For Editor layout/hierarchy work, verify actual splitter dragging, wrapped Inspector guidance, long-name scrolling, explicit child creation and subtree moves with Undo/Redo. Keep user-local panel sizes independent of Tween data and preview execution. Retain the existing serialized graph and Group/Sequence timing semantics.
+
 *   Preserve existing public/protected names, named arguments, enum values, script/asset GUIDs and serialized player fields. Keep existing TMP, uGUI, Transform, Animator and custom TweenPlayer subclass consumption supported.
 *   Contract/Domain/App remain Unity-independent. Domain owns timing/easing calculations; App owns scheduling and execution handles. Keep Unity targets and lifecycle integration in Framework.Unity.
 *   Use a serialized caller context. Unity target access and token cancellation occur on the Unity main thread. Keep synchronous failure propagation, explicit same-lane Tick reentry rejection, and cleanup of failed executions.

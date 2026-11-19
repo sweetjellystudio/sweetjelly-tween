@@ -64,3 +64,5 @@ UITKTweenPreviewViewportTest covers fixed logical/percentage layout and uniform 
 Fractional-DPI viewport regressions exercise the actual Play button with a 1170×2532 Fit canvas and reject a detached canvas until it is attached and laid out again. This guards against permanently treating pixel-rounded layout dimensions as pending.
 
 The actual Play-button matrix additionally covers seven canvas sizes with Fit, 10%, 100% and 400% zoom. Record the actual panel DPI in the host evidence; this matrix is not a claim that every physical display scale was tested.
+
+Editor layout/hierarchy regressions exercise actual splitter pointer dragging, retained canvas/clone/sample pose and manual zoom, Fit resize, local layout persistence/reset, long-name scrolling, Group/Sequence child creation/selection/collapse/reordering/removal, subtree Move To with cycle prevention, Undo/Redo and save/reopen. Fixtures restore their user preferences. Actual appearance and ordinary Editor menu/dropdown interaction are separate host observations.
