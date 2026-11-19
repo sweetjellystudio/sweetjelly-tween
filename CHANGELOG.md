@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Unreleased
+
+* [Fixed] Accept normal panel-pixel rounding when checking preview canvas readiness at fractional DPI, so sizes such as 1170×2532 at 125% scale can play instead of waiting indefinitely.
+
 ## 2.3.1
 
 * [Added] Editor-only fixed preview Canvas Width/Height with persisted user-local settings, uniform Fit/Zoom, wheel navigation and middle-button pan. Window resize preserves logical coordinates and the current preview execution; logical size changes restore/reprepare the preview.

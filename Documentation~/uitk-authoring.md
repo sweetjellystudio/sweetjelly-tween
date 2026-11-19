@@ -18,7 +18,7 @@ Play, Pause, Reverse and the seconds slider use the runtime's prepared evaluator
 
 ### Preview canvas and view
 
-Canvas Width and Height set the available logical UI size, initially 1920×1080 UI pixels. Values from 1 to 16384 apply on Enter or focus loss. The production root keeps its authored layout rules inside that fixed canvas. Changing the logical size restores/stops the preview and resets its timeline; the next Play/scrub prepares after layout resolves.
+Canvas Width and Height set the available logical UI size, initially 1920×1080 UI pixels. Values from 1 to 16384 apply on Enter or focus loss. The production root keeps its authored layout rules inside that fixed canvas. Changing the logical size restores/stops the preview and resets its timeline; the next Play/scrub prepares after layout resolves. Layout readiness allows sub-pixel rounding on the attached panel’s pixel grid; it keeps the configured dimensions intact. A genuinely unresolved or detached canvas still cannot start preview playback.
 
 Fit centers the entire canvas with a margin and recalculates a uniform display scale when the window changes size. Manual Zoom is 10–400%, entered on Enter/focus loss; the 100% button shows one logical unit per panel unit. Wheel zoom keeps the canvas point under the pointer fixed. Drag with the middle mouse button to move the view; Fit recenters it. Fit may go outside the manual zoom range to show a very large/small canvas. Starting manual navigation applies the manual bounds.
 

@@ -23,8 +23,19 @@ namespace SWeetJelly.Tween.Editor
 
         internal Toolbar Controls { get; }
         internal VisualElement Document { get; }
-        internal bool IsLayoutReady => Mathf.Approximately(surface.layout.width, canvasWidth) &&
-            Mathf.Approximately(surface.layout.height, canvasHeight);
+        internal bool IsLayoutReady
+        {
+            get
+            {
+                if (surface.panel == null) return false;
+                float pixelsPerPoint = surface.scaledPixelsPerPoint;
+                if (!float.IsFinite(pixelsPerPoint) || pixelsPerPoint <= 0f) return false;
+                // Layout rounds both edges to panel pixels, independently of preview zoom.
+                float pixelSize = 1f / pixelsPerPoint;
+                return Mathf.Abs(surface.layout.width - canvasWidth) < pixelSize &&
+                    Mathf.Abs(surface.layout.height - canvasHeight) < pixelSize;
+            }
+        }
 
         internal UITKTweenPreviewViewport(Action beforeResize)
         {
